@@ -1,26 +1,47 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Cấu hình bảng màu chuẩn SaaS trực tiếp trong CSS (Tính năng mới của v4) */
+@theme {
+  --color-primary: #2563eb;
+  --color-secondary: #3b82f6;
+  --color-accent: #60a5fa;
+  --color-dark: #0f172a;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  body {
+    @apply bg-[#0F172A] text-slate-50 antialiased selection:bg-blue-500/30;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Hiệu ứng kính mờ cao cấp cho Card */
+  .glass-card {
+    @apply bg-white/3 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(37,99,235,0.15)];
+  }
+
+  /* Hiệu ứng kính mờ cho Input */
+  .glass-input {
+    @apply w-full bg-slate-900/50 border border-slate-700/50 rounded-xl px-4 py-3 pl-11 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all duration-300;
+  }
+
+  /* Nút bấm mạng xã hội */
+  .social-btn {
+    @apply flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-slate-700/50 bg-slate-800/30 hover:bg-slate-700/50 transition-all duration-200 text-sm font-medium text-slate-300 hover:text-white;
+  }
+}
+
+/* Các khối cầu ánh sáng nền (Glow Effects) */
+.bg-glow-blue {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(
+    circle,
+    rgba(37, 99, 235, 0.15) 0%,
+    rgba(15, 23, 42, 0) 70%
+  );
+  border-radius: 50%;
+  filter: blur(60px);
+  z-index: -1;
 }
