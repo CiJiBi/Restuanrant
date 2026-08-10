@@ -16,36 +16,40 @@ class CreateMenuItemDto {
 }
 exports.CreateMenuItemDto = CreateMenuItemDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: "MN001" }),
+    (0, swagger_1.ApiProperty)({ example: "SP001", description: "Mã sản phẩm duy nhất" }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateMenuItemDto.prototype, "itemCode", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: "Thịt bò Wagyu" }),
+    (0, swagger_1.ApiProperty)({ example: "Cà phê Sữa đá", description: "Tên món ăn/đồ uống" }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateMenuItemDto.prototype, "name", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 1250000 }),
+    (0, swagger_1.ApiProperty)({ example: 25000, description: "Giá bán" }),
     (0, class_validator_1.IsNumber)(),
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], CreateMenuItemDto.prototype, "price", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 10 }),
-    (0, class_validator_1.IsNumber)(),
+    (0, swagger_1.ApiProperty)({ example: 100, description: "Số lượng tồn kho" }),
+    (0, class_validator_1.IsInt)(),
     (0, class_validator_1.Min)(0),
     __metadata("design:type", Number)
 ], CreateMenuItemDto.prototype, "stock", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: "https://img.url", required: false }),
+    (0, swagger_1.ApiProperty)({ example: 1, description: "ID của danh mục (Category)" }),
+    (0, class_validator_1.IsInt)(),
+    __metadata("design:type", Number)
+], CreateMenuItemDto.prototype, "categoryId", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        required: false,
+        example: "https://...",
+        description: "Link ảnh sản phẩm",
+    }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsUrl)(),
     __metadata("design:type", String)
 ], CreateMenuItemDto.prototype, "imageUrl", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 1 }),
-    (0, class_validator_1.IsNumber)(),
-    __metadata("design:type", Number)
-], CreateMenuItemDto.prototype, "categoryId", void 0);
 //# sourceMappingURL=create-menu-item.dto.js.map

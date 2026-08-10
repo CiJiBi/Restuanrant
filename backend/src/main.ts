@@ -9,6 +9,12 @@ import { AllExceptionsFilter } from "./core/filters/http-exception.filter";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // MỞ CỔNG CORS TẠI ĐÂY
+  app.enableCors({
+    origin: "http://localhost:3000", // Cho phép Frontend (cổng 3000) truy cập
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+  });
   // Security & Middlewares
   app.enableCors();
 

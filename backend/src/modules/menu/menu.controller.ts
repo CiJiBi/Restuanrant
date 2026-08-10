@@ -1,4 +1,3 @@
-// src/modules/menu/menu.controller.ts
 import {
   Controller,
   Get,
@@ -9,40 +8,41 @@ import {
   Query,
   UseGuards,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { MenuService } from "./menu.service";
 import { CreateMenuItemDto } from "./dto/create-menu-item.dto";
-import { JwtAuthGuard } from "src/core/guards/jwt-auth.guard";
+import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import { JwtAuthGuard } from "../../core/guards/jwt-auth.guard";
 
-@ApiTags("Menu Management")
-@Controller("api/menu")
+@ApiTags("Menu (Thực đơn)")
+@Controller("menu")
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
 
   @Get()
-  @ApiOperation({
-    summary: "Lấy danh sách món ăn (Hỗ trợ phân trang, tìm kiếm)",
-  })
-  findAll(@Query("search") search: string, @Query("skip") skip: string) {
-    return this.menuService.getAllMenuItems({
-      search,
-      skip: Number(skip) || 0,
-    });
+  @ApiOperation({ summary: "Lấy danh sách món ăn" })
+  findAll(@Query("search") search?: string, @Query("skip") skip?: number) {
+    return this.menuService.findAll(search, skip);
+  }
+
+  @Get(":id")
+  @ApiOperation({ summary: "Lấy chi tiết một món ăn" })
+  findOne(@Param("id") id: string) {
+    return this.menuService.findOne(id);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard) // Chỉ Admin có token mới được thêm
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Thêm món ăn mới" })
+  @ApiOperation({ summary: "Thêm món ăn mới (Yêu cầu đăng nhập)" })
   create(@Body() createMenuDto: CreateMenuItemDto) {
-    return this.menuService.createMenuItem(createMenuDto);
+    return this.menuService.create(createMenuDto);
   }
 
   @Delete(":id")
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Soft delete món ăn" })
+  @ApiOperation({ summary: "Xóa mềm món ăn (Yêu cầu đăng nhập)" })
   remove(@Param("id") id: string) {
-    return this.menuService.softDeleteMenuItem(id);
+    return this.menuService.remove(id);
   }
 }

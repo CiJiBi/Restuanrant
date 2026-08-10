@@ -1,17 +1,76 @@
 import { PrismaService } from "../../../prisma/prisma.service";
 import { IGenericRepository } from "../../../core/base/repository.interface";
-import { MenuItem, Prisma } from "@prisma/client";
-export declare class MenuRepository implements IGenericRepository<MenuItem> {
+export declare class MenuRepository implements IGenericRepository<any> {
     private prisma;
     constructor(prisma: PrismaService);
-    findAll(params: {
+    findAll(params?: {
+        search?: string;
         skip?: number;
         take?: number;
-        search?: string;
-    }): Promise<any>;
-    findById(id: string): Promise<MenuItem>;
-    create(data: Prisma.MenuItemCreateInput): Promise<MenuItem>;
-    update(id: string, data: Prisma.MenuItemUpdateInput): Promise<MenuItem>;
+    }): Promise<({
+        category: {
+            name: string;
+            description: string | null;
+            id: number;
+        };
+    } & {
+        name: string;
+        id: string;
+        itemCode: string;
+        price: number;
+        stock: number;
+        status: string;
+        imageUrl: string | null;
+        isDeleted: boolean;
+        categoryId: number;
+        createdAt: Date;
+        updatedAt: Date;
+    })[]>;
+    findById(id: string): Promise<{
+        category: {
+            name: string;
+            description: string | null;
+            id: number;
+        };
+    } & {
+        name: string;
+        id: string;
+        itemCode: string;
+        price: number;
+        stock: number;
+        status: string;
+        imageUrl: string | null;
+        isDeleted: boolean;
+        categoryId: number;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    create(data: any): Promise<{
+        name: string;
+        id: string;
+        itemCode: string;
+        price: number;
+        stock: number;
+        status: string;
+        imageUrl: string | null;
+        isDeleted: boolean;
+        categoryId: number;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    update(id: string, data: any): Promise<{
+        name: string;
+        id: string;
+        itemCode: string;
+        price: number;
+        stock: number;
+        status: string;
+        imageUrl: string | null;
+        isDeleted: boolean;
+        categoryId: number;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
     delete(id: string): Promise<boolean>;
     softDelete(id: string): Promise<boolean>;
 }

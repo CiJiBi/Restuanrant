@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["node"],
     "ignoreDeprecations": "6.0",
     "rootDir": "./",
     "module": "commonjs",

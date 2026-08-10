@@ -13,31 +13,32 @@ exports.MenuService = void 0;
 const common_1 = require("@nestjs/common");
 const menu_repository_1 = require("./repositories/menu.repository");
 let MenuService = class MenuService {
-    constructor(menuRepo) {
-        this.menuRepo = menuRepo;
+    constructor(menuRepository) {
+        this.menuRepository = menuRepository;
     }
-    async getAllMenuItems(query) {
-        return this.menuRepo.findAll(query);
+    async findAll(search, skip) {
+        return this.menuRepository.findAll({ search, skip, take: 20 });
     }
-    async createMenuItem(dto) {
-        const exist = await this.menuRepo.findAll({ search: dto.itemCode });
-        if (exist.items.length > 0) {
-            throw new common_1.ConflictException(`Item code ${dto.itemCode} đã tồn tại.`);
-        }
-        return this.menuRepo.create({
-            itemCode: dto.itemCode,
-            name: dto.name,
-            price: dto.price,
-            stock: dto.stock,
-            imageUrl: dto.imageUrl,
-            category: { connect: { id: dto.categoryId } },
-        });
-    }
-    async softDeleteMenuItem(id) {
-        const item = await this.menuRepo.findById(id);
+    async findOne(id) {
+        const item = await this.menuRepository.findById(id);
         if (!item)
-            throw new common_1.NotFoundException("Không tìm thấy món ăn");
-        return this.menuRepo.softDelete(id);
+            throw new common_1.NotFoundException("Không tìm thấy món ăn này!");
+        return item;
+    }
+    async create(createMenuDto) {
+        try {
+            return await this.menuRepository.create(createMenuDto);
+        }
+        catch (error) {
+            if (error.code === "P2002") {
+                throw new common_1.BadRequestException("Mã sản phẩm (itemCode) đã tồn tại!");
+            }
+            throw error;
+        }
+    }
+    async remove(id) {
+        await this.findOne(id);
+        return this.menuRepository.softDelete(id);
     }
 };
 exports.MenuService = MenuService;

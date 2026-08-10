@@ -17,31 +17,29 @@ let MenuRepository = class MenuRepository {
         this.prisma = prisma;
     }
     async findAll(params) {
-        const { skip = 0, take = 10, search } = params;
-        const where = { isDeleted: false };
-        if (search) {
-            where.name = { contains: search };
-        }
-        const [items, total] = await this.prisma.$transaction([
-            this.prisma.menuItem.findMany({
-                where,
-                skip,
-                take,
-                include: { category: true },
-                orderBy: { createdAt: "desc" },
-            }),
-            this.prisma.menuItem.count({ where }),
-        ]);
-        return { items, meta: { total, skip, take } };
+        const { search, skip = 0, take = 10 } = params || {};
+        return this.prisma.menuItem.findMany({
+            where: search ? { name: { contains: search } } : { isDeleted: false },
+            skip: Number(skip),
+            take: Number(take),
+            include: { category: true },
+            orderBy: { createdAt: "desc" },
+        });
     }
     async findById(id) {
-        return this.prisma.menuItem.findFirst({ where: { id, isDeleted: false } });
+        return this.prisma.menuItem.findUnique({
+            where: { id },
+            include: { category: true },
+        });
     }
     async create(data) {
         return this.prisma.menuItem.create({ data });
     }
     async update(id, data) {
-        return this.prisma.menuItem.update({ where: { id }, data });
+        return this.prisma.menuItem.update({
+            where: { id },
+            data,
+        });
     }
     async delete(id) {
         await this.prisma.menuItem.delete({ where: { id } });
@@ -50,7 +48,7 @@ let MenuRepository = class MenuRepository {
     async softDelete(id) {
         await this.prisma.menuItem.update({
             where: { id },
-            data: { isDeleted: true, status: "Ngừng bán" },
+            data: { isDeleted: true, status: "INACTIVE" },
         });
         return true;
     }

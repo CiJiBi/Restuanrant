@@ -3,6 +3,6 @@ export declare class CreateMenuItemDto {
     name: string;
     price: number;
     stock: number;
-    imageUrl?: string;
     categoryId: number;
+    imageUrl?: string;
 }
