@@ -1,10 +1,23 @@
 import axios from "axios";
 
-// Thiết lập mặc định để kết nối với NestJS
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000",
-  timeout: 10000,
+  baseURL: "http://localhost:4000",
 });
 
-// Bạn có thể mở rộng file này ở Giai đoạn Bảo mật (gắn JWT Token tự động vào header)
+// ĐOẠN NÀY RẤT QUAN TRỌNG: Tự động gắn Token vào mọi Request
+api.interceptors.request.use(
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("cijibi_token");
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  },
+);
+
 export default api;

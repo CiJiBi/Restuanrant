@@ -1,87 +1,144 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Plus,
-  Search,
-  Filter,
-  MoreHorizontal,
-  Edit2,
-  Trash2,
-  Image as ImageIcon,
-  X,
-} from "lucide-react";
-import { INITIAL_MENU_ITEMS } from "../../constants/data";
+import api from "../../lib/axios";
+import { Edit, Trash2, Plus, Search, Filter, X } from "lucide-react";
+
+interface MenuItem {
+  id: string;
+  itemCode: string;
+  name: string;
+  price: number;
+  stock: number;
+  imageUrl?: string;
+  category?: { name: string };
+}
 
 export default function MenuManagementPage() {
-  // 1. Quản lý State Dữ liệu Thực đơn
-  const [items, setItems] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("cijibi_menu");
-      return saved ? JSON.parse(saved) : INITIAL_MENU_ITEMS;
-    }
-    return INITIAL_MENU_ITEMS;
-  });
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [searchTerm, setSearchTerm] = useState("");
+  // State quản lý Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // THÊM MỚI: Biến lưu ID của món đang sửa (Nếu null nghĩa là đang Thêm mới)
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   const [newItem, setNewItem] = useState({
+    itemCode: "",
     name: "",
-    category: "Món chính",
     price: "",
     stock: "",
+    categoryId: 1,
+    imageUrl: "",
   });
 
-  // 2. Tự động lưu vào trình duyệt khi có thay đổi
   useEffect(() => {
-    localStorage.setItem("cijibi_menu", JSON.stringify(items));
-  }, [items]);
+    fetchMenu();
+  }, []);
 
-  // 3. Logic xử lý dữ liệu
-  const filteredItems = items.filter((item: any) =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const fetchMenu = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.get("/menu");
+      const payload = response.data;
 
-  const handleAddItem = (e: React.FormEvent) => {
-    e.preventDefault();
-    const itemToAdd = {
-      ...newItem,
-      id: `MN${Math.floor(Math.random() * 1000)}`,
-      price: Number(newItem.price),
-      stock: Number(newItem.stock),
-      status: "Đang bán",
-      img: "https://images.unsplash.com/photo-1544025162-8315520c6792?q=80&w=150&auto=format&fit=crop",
-    };
-    setItems([itemToAdd, ...items]);
-    setIsModalOpen(false);
-    setNewItem({ name: "", category: "Món chính", price: "", stock: "" });
-  };
-
-  const deleteItem = (id: string) => {
-    if (confirm("Bạn có chắc chắn muốn xóa món này?")) {
-      setItems(items.filter((i: any) => i.id !== id));
+      if (payload?.data?.data && Array.isArray(payload.data.data)) {
+        setMenuItems(payload.data.data);
+      } else if (payload?.data && Array.isArray(payload.data)) {
+        setMenuItems(payload.data);
+      } else if (Array.isArray(payload)) {
+        setMenuItems(payload);
+      } else {
+        setMenuItems([]);
+      }
+    } catch (error) {
+      console.error("❌ Lỗi đồng bộ dữ liệu:", error);
+      setMenuItems([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // 4. Hàm chọn màu huy hiệu
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Đang bán":
-        return "bg-green-500/10 text-green-400 border-green-500/20";
-      case "Sắp hết":
-        return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
-      case "Hết hàng":
-        return "bg-red-500/10 text-red-400 border-red-500/20";
-      default:
-        return "bg-slate-500/10 text-slate-400 border-slate-500/20";
+  // THÊM MỚI: Hàm mở Form để Sửa (Điền sẵn dữ liệu cũ vào Form)
+  const handleOpenEdit = (item: MenuItem) => {
+    setEditingId(item.id);
+    setNewItem({
+      itemCode: item.itemCode,
+      name: item.name,
+      price: item.price.toString(),
+      stock: item.stock.toString(),
+      categoryId: 1,
+      imageUrl: item.imageUrl || "",
+    });
+    setIsModalOpen(true);
+  };
+
+  // THÊM MỚI: Hàm đóng Form và dọn dẹp sạch sẽ
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingId(null);
+    setNewItem({
+      itemCode: "",
+      name: "",
+      price: "",
+      stock: "",
+      categoryId: 1,
+      imageUrl: "",
+    });
+  };
+
+  // CẬP NHẬT: Hàm Lưu giờ đây xử lý được cả THÊM và SỬA
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        ...newItem,
+        price: Number(newItem.price),
+        stock: Number(newItem.stock),
+      };
+
+      if (editingId) {
+        // Nếu có editingId -> Gọi API Sửa (PATCH)
+        await api.patch(`/menu/${editingId}`, payload);
+      } else {
+        // Nếu không có editingId -> Gọi API Thêm (POST)
+        await api.post("/menu", payload);
+      }
+
+      fetchMenu(); // Tải lại bảng
+      handleCloseModal(); // Đóng Popup
+      alert(
+        editingId
+          ? "✅ Cập nhật món ăn thành công!"
+          : "✅ Đã thêm món mới thành công!",
+      );
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Lỗi khi lưu món ăn!");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const isConfirm = window.confirm(
+      "⚠️ Bạn có chắc chắn muốn xóa món ăn này khỏi hệ thống không?",
+    );
+    if (!isConfirm) return;
+    try {
+      await api.delete(`/menu/${id}`);
+      fetchMenu();
+      alert("✅ Đã xóa món ăn thành công!");
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Có lỗi xảy ra khi xóa món ăn!");
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6 text-slate-300">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">
             Quản lý Thực đơn
@@ -90,235 +147,264 @@ export default function MenuManagementPage() {
             Quản lý danh sách món ăn, giá cả và tình trạng kho.
           </p>
         </div>
-
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-secondary text-white text-sm font-medium rounded-xl transition-all shadow-[0_4px_14px_0_rgba(37,99,235,0.3)] hover:-translate-y-px"
+          onClick={() => {
+            handleCloseModal(); // Reset form sạch sẽ trước khi Thêm mới
+            setIsModalOpen(true);
+          }}
+          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-blue-500/20"
         >
           <Plus size={18} /> Thêm món mới
         </button>
       </div>
 
-      {/* Toolbar (Search & Filter) */}
-      <div className="glass-card rounded-2xl p-4 flex flex-col sm:flex-row gap-4 justify-between items-center z-10 relative">
-        <div className="relative w-full sm:w-96 group">
+      {/* Thanh Tìm kiếm & Lọc */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
           <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
             size={18}
           />
           <input
             type="text"
             placeholder="Tìm kiếm món ăn..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-900/50 border border-slate-700/50 rounded-xl px-4 py-2.5 pl-10 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all"
+            className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-slate-800/40 border border-slate-700/50 text-white placeholder-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all"
           />
         </div>
-
-        <button className="flex items-center gap-2 px-4 py-2.5 bg-slate-800/50 border border-slate-700/50 hover:bg-slate-700/50 text-slate-300 text-sm font-medium rounded-xl transition-all w-full sm:w-auto justify-center">
+        <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/40 border border-slate-700/50 hover:bg-slate-800 text-slate-300 text-sm font-medium transition-colors">
           <Filter size={16} /> Lọc danh mục
         </button>
       </div>
 
-      {/* Data Table */}
-      <div className="glass-card rounded-2xl overflow-hidden relative z-10">
+      {/* Bảng Dữ Liệu */}
+      <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl overflow-hidden backdrop-blur-md">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-300 whitespace-nowrap">
-            <thead className="text-xs uppercase bg-slate-800/50 text-slate-400 border-b border-slate-700/50">
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            <thead className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-700/50 bg-slate-800/20">
               <tr>
-                <th className="px-6 py-4 font-medium tracking-wider">Món ăn</th>
-                <th className="px-6 py-4 font-medium tracking-wider">
-                  Danh mục
-                </th>
-                <th className="px-6 py-4 font-medium tracking-wider">
-                  Giá bán
-                </th>
-                <th className="px-6 py-4 font-medium tracking-wider">
-                  Tồn kho
-                </th>
-                <th className="px-6 py-4 font-medium tracking-wider">
-                  Trạng thái
-                </th>
-                <th className="px-6 py-4 font-medium tracking-wider text-right">
-                  Thao tác
-                </th>
+                <th className="px-6 py-4">MÓN ĂN</th>
+                <th className="px-6 py-4">DANH MỤC</th>
+                <th className="px-6 py-4">GIÁ BÁN</th>
+                <th className="px-6 py-4">TỒN KHO</th>
+                <th className="px-6 py-4">TRẠNG THÁI</th>
+                <th className="px-6 py-4 text-right">THAO TÁC</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/50">
-              {filteredItems.map((item: any, index: number) => (
-                <motion.tr
-                  key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
-                  className="hover:bg-slate-800/30 transition-colors group"
-                >
-                  <td className="px-6 py-4 flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-800 shrink-0 border border-slate-700/50 relative">
-                      {item.img ? (
-                        <img
-                          src={item.img}
-                          alt={item.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-12 text-center text-slate-400"
+                  >
+                    <div className="flex justify-center items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      Đang đồng bộ dữ liệu hệ thống...
+                    </div>
+                  </td>
+                </tr>
+              ) : (Array.isArray(menuItems) ? menuItems : []).length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-6 py-12 text-center text-slate-500"
+                  >
+                    Chưa có món ăn nào trong hệ thống.
+                  </td>
+                </tr>
+              ) : (
+                (Array.isArray(menuItems) ? menuItems : []).map((item) => (
+                  <tr
+                    key={item.id}
+                    className="hover:bg-slate-800/40 transition-colors group"
+                  >
+                    <td className="px-6 py-4 flex items-center gap-4">
+                      <div className="h-10 w-10 rounded-lg bg-slate-800 overflow-hidden shrink-0 flex items-center justify-center text-[10px] text-slate-500 border border-slate-700/50">
+                        {item.imageUrl ? (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          "No img"
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-200 text-sm mb-0.5">
+                          {item.name}
+                        </p>
+                        <p className="text-[11px] text-slate-500 uppercase">
+                          {item.itemCode}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-3 py-1 rounded-md bg-slate-800/80 border border-slate-700/50 text-slate-300 text-xs">
+                        {item.category?.name || "Món chính"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-slate-200">
+                      {item.price.toLocaleString("vi-VN")}đ
+                    </td>
+                    <td className="px-6 py-4 text-slate-400 font-medium">
+                      {item.stock}
+                    </td>
+                    <td className="px-6 py-4">
+                      {item.stock > 0 ? (
+                        <span className="px-2.5 py-1 rounded-md bg-green-500/10 text-green-400 text-[11px] font-medium border border-green-500/20">
+                          Đang bán
+                        </span>
                       ) : (
-                        <ImageIcon
-                          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-slate-500"
-                          size={18}
-                        />
+                        <span className="px-2.5 py-1 rounded-md bg-red-500/10 text-red-400 text-[11px] font-medium border border-red-500/20">
+                          Hết hàng
+                        </span>
                       )}
-                    </div>
-                    <div>
-                      <p className="font-bold text-white group-hover:text-primary transition-colors">
-                        {item.name}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-0.5">{item.id}</p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2.5 py-1 bg-slate-800 rounded-md text-xs font-medium text-slate-300 border border-slate-700">
-                      {item.category}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 font-medium text-slate-200">
-                    {Number(item.price).toLocaleString()}đ
-                  </td>
-                  <td className="px-6 py-4">{item.stock}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2.5 py-1 text-xs font-bold rounded-md border ${getStatusColor(item.status)}`}
-                    >
-                      {item.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
-                      <button className="p-1.5 hover:bg-slate-700 rounded-md text-slate-400 hover:text-primary transition-colors">
-                        <Edit2 size={16} />
-                      </button>
-                      <button
-                        onClick={() => deleteItem(item.id)}
-                        className="p-1.5 hover:bg-slate-700 rounded-md text-slate-400 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </motion.tr>
-              ))}
+                    </td>
+                    <td className="px-6 py-4 pr-6">
+                      <div className="flex items-center justify-end gap-2 text-slate-500 opacity-50 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => handleOpenEdit(item)}
+                          title="Sửa"
+                          className="p-2 hover:bg-slate-700/50 hover:text-blue-400 rounded-lg transition-colors"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          title="Xóa"
+                          className="p-2 hover:bg-slate-700/50 hover:text-red-400 rounded-lg transition-colors"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
-
-          {filteredItems.length === 0 && (
-            <div className="py-12 text-center text-slate-400">
-              Không tìm thấy món ăn nào.
-            </div>
-          )}
         </div>
       </div>
 
-      {/* --- OVERLAY MODAL THÊM MÓN --- */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsModalOpen(false)}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="relative w-full max-w-md glass-card p-8 rounded-3xl border border-white/10 bg-slate-900 shadow-2xl"
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-white">
-                  Thêm món ăn mới
-                </h2>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="text-slate-400 hover:text-white"
-                >
-                  <X size={20} />
-                </button>
-              </div>
+      {/* Popup Modal Dùng chung cho Thêm & Sửa */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#111827] border border-slate-700/80 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-slate-800">
+              <h3 className="text-xl font-bold text-white">
+                {editingId ? "Cập nhật thông tin món" : "Thêm món ăn mới"}
+              </h3>
+              <button
+                onClick={handleCloseModal}
+                className="text-slate-500 hover:text-slate-300 transition-colors bg-slate-800/50 p-2 rounded-full"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-              <form onSubmit={handleAddItem} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-xs text-slate-400 font-medium">
-                    Tên món ăn
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase">
+                    Mã món
                   </label>
                   <input
-                    type="text"
                     required
-                    className="glass-input"
+                    type="text"
+                    placeholder="VD: MN003"
+                    value={newItem.itemCode}
+                    onChange={(e) =>
+                      setNewItem({ ...newItem, itemCode: e.target.value })
+                    }
+                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase">
+                    Tên món
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="Tên món ăn"
                     value={newItem.name}
                     onChange={(e) =>
                       setNewItem({ ...newItem, name: e.target.value })
                     }
+                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs text-slate-400 font-medium">
-                    Danh mục
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase">
+                    Giá bán (VNĐ)
                   </label>
-                  <select
-                    className="glass-input w-full appearance-none bg-slate-800"
-                    value={newItem.category}
+                  <input
+                    required
+                    type="number"
+                    placeholder="0"
+                    value={newItem.price}
                     onChange={(e) =>
-                      setNewItem({ ...newItem, category: e.target.value })
+                      setNewItem({ ...newItem, price: e.target.value })
                     }
-                  >
-                    <option>Món chính</option>
-                    <option>Khai vị</option>
-                    <option>Hải sản</option>
-                    <option>Tráng miệng</option>
-                  </select>
+                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all"
+                  />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 font-medium">
-                      Giá bán (VNĐ)
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      className="glass-input"
-                      value={newItem.price}
-                      onChange={(e) =>
-                        setNewItem({ ...newItem, price: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs text-slate-400 font-medium">
-                      Số lượng kho
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      className="glass-input"
-                      value={newItem.stock}
-                      onChange={(e) =>
-                        setNewItem({ ...newItem, stock: e.target.value })
-                      }
-                    />
-                  </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase">
+                    Tồn kho
+                  </label>
+                  <input
+                    required
+                    type="number"
+                    placeholder="Số lượng"
+                    value={newItem.stock}
+                    onChange={(e) =>
+                      setNewItem({ ...newItem, stock: e.target.value })
+                    }
+                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all"
+                  />
                 </div>
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase">
+                    Đường dẫn Ảnh minh họa
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://..."
+                    value={newItem.imageUrl}
+                    onChange={(e) =>
+                      setNewItem({ ...newItem, imageUrl: e.target.value })
+                    }
+                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-8 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="px-5 py-2.5 rounded-xl font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                >
+                  Hủy bỏ
+                </button>
                 <button
                   type="submit"
-                  className="w-full py-3 mt-2 bg-primary hover:bg-secondary text-white rounded-xl font-bold transition-all shadow-[0_4px_14px_0_rgba(37,99,235,0.39)]"
+                  disabled={isSubmitting}
+                  className="px-6 py-2.5 rounded-xl font-medium bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50 transition-colors shadow-lg shadow-blue-500/20"
                 >
-                  Lưu vào thực đơn
+                  {isSubmitting
+                    ? "Đang xử lý..."
+                    : editingId
+                      ? "Lưu thay đổi"
+                      : "Lưu món ăn"}
                 </button>
-              </form>
-            </motion.div>
+              </div>
+            </form>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }

@@ -12,9 +12,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MenuService = void 0;
 const common_1 = require("@nestjs/common");
 const menu_repository_1 = require("./repositories/menu.repository");
+const prisma_service_1 = require("../../prisma/prisma.service");
 let MenuService = class MenuService {
-    constructor(menuRepository) {
+    constructor(menuRepository, prisma) {
         this.menuRepository = menuRepository;
+        this.prisma = prisma;
     }
     async findAll(search, skip) {
         return this.menuRepository.findAll({ search, skip, take: 20 });
@@ -24,6 +26,32 @@ let MenuService = class MenuService {
         if (!item)
             throw new common_1.NotFoundException("Không tìm thấy món ăn này!");
         return item;
+    }
+    async getAllMenu() {
+        const data = await this.prisma.menuItem.findMany({
+            include: { category: true },
+            orderBy: { createdAt: "desc" },
+        });
+        return { success: true, data };
+    }
+    async createMenuItem(data) {
+        const newItem = await this.prisma.menuItem.create({
+            data,
+        });
+        return { success: true, data: newItem };
+    }
+    async updateMenuItem(id, data) {
+        const existingItem = await this.prisma.menuItem.findUnique({
+            where: { id },
+        });
+        if (!existingItem) {
+            throw new common_1.NotFoundException("Không tìm thấy món ăn này!");
+        }
+        const updatedItem = await this.prisma.menuItem.update({
+            where: { id },
+            data,
+        });
+        return { success: true, message: "Cập nhật thành công", data: updatedItem };
     }
     async create(createMenuDto) {
         try {
@@ -36,6 +64,18 @@ let MenuService = class MenuService {
             throw error;
         }
     }
+    async deleteMenuItem(id) {
+        const existingItem = await this.prisma.menuItem.findUnique({
+            where: { id },
+        });
+        if (!existingItem) {
+            throw new common_1.NotFoundException("Không tìm thấy món ăn này!");
+        }
+        await this.prisma.menuItem.delete({
+            where: { id },
+        });
+        return { success: true, message: "Đã xóa món ăn thành công" };
+    }
     async remove(id) {
         await this.findOne(id);
         return this.menuRepository.softDelete(id);
@@ -44,6 +84,7 @@ let MenuService = class MenuService {
 exports.MenuService = MenuService;
 exports.MenuService = MenuService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [menu_repository_1.MenuRepository])
+    __metadata("design:paramtypes", [menu_repository_1.MenuRepository,
+        prisma_service_1.PrismaService])
 ], MenuService);
 //# sourceMappingURL=menu.service.js.map

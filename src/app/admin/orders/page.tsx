@@ -1,234 +1,245 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import api from "../../lib/axios";
 import {
+  ShoppingCart,
   Clock,
-  ChefHat,
-  Package,
-  CheckCircle2,
-  MoreVertical,
-  Search,
-  Filter,
+  CheckCircle,
+  Truck,
+  AlertCircle,
 } from "lucide-react";
-import { INITIAL_ORDERS, Order, OrderStatus } from "../../constants/data";
 
-const columns = [
-  {
-    id: "pending",
-    title: "Chờ xác nhận",
-    icon: Clock,
-    color: "text-orange-400",
-    bg: "bg-orange-500/10",
-    border: "border-orange-500/20",
-  },
-  {
-    id: "cooking",
-    title: "Đang chế biến",
-    icon: ChefHat,
-    color: "text-primary",
-    bg: "bg-primary/10",
-    border: "border-primary/20",
-  },
-  {
-    id: "ready",
-    title: "Sẵn sàng phục vụ",
-    icon: Package,
-    color: "text-yellow-400",
-    bg: "bg-yellow-500/10",
-    border: "border-yellow-500/20",
-  },
-  {
-    id: "completed",
-    title: "Đã hoàn thành",
-    icon: CheckCircle2,
-    color: "text-green-400",
-    bg: "bg-green-500/10",
-    border: "border-green-500/20",
-  },
-];
+interface OrderItem {
+  id: string;
+  quantity: number;
+  unitPrice: number;
+  menuItem: {
+    name: string;
+  };
+}
 
-export default function KanbanOrdersPage() {
-  // Lấy dữ liệu từ Trình duyệt (nếu có), nếu không có thì lấy dữ liệu mẫu
-  const [orders, setOrders] = useState<Order[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("cijibi_orders");
-      return saved ? JSON.parse(saved) : INITIAL_ORDERS;
-    }
-    return INITIAL_ORDERS;
-  });
+interface Order {
+  id: string;
+  customer?: string;
+  tableNumber?: string;
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+  details: OrderItem[];
+}
 
-  const [draggedOrderId, setDraggedOrderId] = useState<string | null>(null);
-  const [activeColumn, setActiveColumn] = useState<OrderStatus | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+export default function OrdersManagementPage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Tự động lưu mỗi khi trạng thái đơn hàng bị thay đổi (kéo thả)
   useEffect(() => {
-    localStorage.setItem("cijibi_orders", JSON.stringify(orders));
-  }, [orders]);
+    fetchOrders();
+  }, []);
 
-  // Các hàm xử lý kéo thả (Giữ nguyên logic mượt mà)
-  const handleDragStart = (e: React.DragEvent, id: string) => {
-    setDraggedOrderId(id);
-    e.dataTransfer.effectAllowed = "move";
-    const ghost = document.createElement("div");
-    e.dataTransfer.setDragImage(ghost, 0, 0);
-  };
+  const fetchOrders = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.get("/orders");
+      const payload = response.data;
 
-  const handleDragOver = (e: React.DragEvent, status: OrderStatus) => {
-    e.preventDefault();
-    if (activeColumn !== status) setActiveColumn(status);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setActiveColumn(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, targetStatus: OrderStatus) => {
-    e.preventDefault();
-    setActiveColumn(null);
-    if (draggedOrderId) {
-      setOrders(
-        orders.map((order) =>
-          order.id === draggedOrderId
-            ? { ...order, status: targetStatus }
-            : order,
-        ),
-      );
+      // Xử lý bóc tách dữ liệu thông minh qua các lớp của NestJS
+      if (payload?.data && Array.isArray(payload.data)) {
+        setOrders(payload.data);
+      } else if (Array.isArray(payload)) {
+        setOrders(payload);
+      } else {
+        setOrders([]);
+      }
+    } catch (error) {
+      console.error("Lỗi tải danh sách đơn hàng:", error);
+      setOrders([]);
+    } finally {
+      setIsLoading(false);
     }
-    setDraggedOrderId(null);
   };
 
-  const filteredOrders = orders.filter(
-    (o) =>
-      o.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      o.table.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  // Hàm chuyển đổi trạng thái đơn hàng
+  const handleUpdateStatus = async (id: string, newStatus: string) => {
+    try {
+      await api.patch(`/orders/${id}/status`, { status: newStatus });
+      fetchOrders(); // Tải lại danh sách sau khi đổi trạng thái
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Không thể cập nhật trạng thái!");
+    }
+  };
+
+  // Hàm hiển thị Badge trạng thái tương ứng
+  const renderStatusBadge = (status: string) => {
+    switch (status) {
+      case "PENDING":
+        return (
+          <span className="px-3 py-1 rounded-md bg-yellow-500/10 text-yellow-400 text-xs font-medium border border-yellow-500/20 flex items-center gap-1.5 w-fit">
+            <Clock size={12} /> Chờ xác nhận
+          </span>
+        );
+      case "PREPARING":
+        return (
+          <span className="px-3 py-1 rounded-md bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/20 flex items-center gap-1.5 w-fit">
+            <Truck size={12} /> Đang chuẩn bị
+          </span>
+        );
+      case "COMPLETED":
+        return (
+          <span className="px-3 py-1 rounded-md bg-green-500/10 text-green-400 text-xs font-medium border border-green-500/20 flex items-center gap-1.5 w-fit">
+            <CheckCircle size={12} /> Hoàn thành
+          </span>
+        );
+      default:
+        return (
+          <span className="px-3 py-1 rounded-md bg-slate-700/50 text-slate-400 text-xs font-medium">
+            {status}
+          </span>
+        );
+    }
+  };
 
   return (
-    <div className="max-w-[1400px] mx-auto h-[calc(100vh-8rem)] flex flex-col gap-6">
-      {/* Header & Tools */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4 shrink-0">
+    <div className="space-y-6 text-slate-300">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">
-            Tiến độ đơn hàng
+            Quản lý Đơn hàng
           </h1>
           <p className="text-slate-400 text-sm mt-1">
-            Kéo thả để cập nhật trạng thái đơn hàng tới bộ phận bếp.
+            Theo dõi và cập nhật tiến độ các đơn gọi món của khách hàng.
           </p>
         </div>
-
-        <div className="flex items-center gap-3">
-          <div className="relative group">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
-              size={16}
-            />
-            <input
-              type="text"
-              placeholder="Tìm mã đơn, tên bàn..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-slate-900/50 border border-slate-700/50 rounded-xl px-4 py-2 pl-9 text-sm text-slate-200 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all w-48 sm:w-64"
-            />
-          </div>
-        </div>
+        <button
+          onClick={fetchOrders}
+          className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-xl border border-slate-700 transition-colors"
+        >
+          🔄 Làm mới dữ liệu
+        </button>
       </div>
 
-      {/* Kanban Board Layout */}
-      <div className="flex-1 flex gap-4 lg:gap-6 overflow-x-auto pb-4 snap-x">
-        {columns.map((col) => {
-          const columnOrders = filteredOrders.filter(
-            (o) => o.status === col.id,
-          );
-          const isDragOver = activeColumn === col.id;
-          const Icon = col.icon;
-
-          return (
-            <div
-              key={col.id}
-              className="flex-1 min-w-[300px] max-w-[400px] flex flex-col gap-4 snap-center"
-              onDragOver={(e) => handleDragOver(e, col.id as OrderStatus)}
-              onDragLeave={handleDragLeave}
-              onDrop={(e) => handleDrop(e, col.id as OrderStatus)}
-            >
-              {/* Column Header */}
-              <div
-                className={`glass-card rounded-2xl p-4 border-t-2 ${isDragOver ? col.border.replace("20", "100") : "border-t-transparent"} transition-all flex items-center justify-between`}
-              >
-                <div className="flex items-center gap-2">
-                  <div className={`p-1.5 rounded-lg ${col.bg} ${col.color}`}>
-                    <Icon size={18} />
-                  </div>
-                  <h3 className="font-bold text-white text-sm">{col.title}</h3>
-                </div>
-                <span className="text-xs font-bold bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full border border-slate-700/50">
-                  {columnOrders.length}
-                </span>
-              </div>
-
-              {/* Column Body */}
-              <div
-                className={`flex-1 overflow-y-auto rounded-2xl p-2 -mx-2 transition-colors duration-200 ${isDragOver ? "bg-slate-800/30 ring-1 ring-slate-700/50 inset-0" : ""}`}
-              >
-                <AnimatePresence>
-                  {columnOrders.map((order) => (
-                    <motion.div
-                      layout
-                      layoutId={order.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 25,
-                      }}
-                      key={order.id}
-                      draggable
-                      onDragStart={(e: any) => handleDragStart(e, order.id)}
-                      className={`glass-card p-4 rounded-xl mb-3 cursor-grab active:cursor-grabbing border ${draggedOrderId === order.id ? "border-primary shadow-[0_0_20px_rgba(37,99,235,0.2)] opacity-50" : "border-slate-700/30 hover:border-slate-600"} transition-all`}
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <span className="text-xs font-bold text-accent">
-                            {order.id}
-                          </span>
-                          <h4 className="text-white font-bold mt-0.5">
-                            {order.table}
-                          </h4>
-                        </div>
-                        <button className="text-slate-500 hover:text-white transition-colors">
-                          <MoreVertical size={16} />
-                        </button>
-                      </div>
-
-                      <p className="text-sm text-slate-300 mb-4 line-clamp-2 leading-relaxed">
-                        {order.items}
+      {/* Danh sách Đơn hàng */}
+      <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl overflow-hidden backdrop-blur-md">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            <thead className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-700/50 bg-slate-800/20">
+              <tr>
+                <th className="px-6 py-4">MÃ ĐƠN & BÀN</th>
+                <th className="px-6 py-4">CHI TIẾT MÓN ĂN</th>
+                <th className="px-6 py-4">TỔNG TIỀN</th>
+                <th className="px-6 py-4">TRẠNG THÁI</th>
+                <th className="px-6 py-4 text-right">HÀNH ĐỘNG</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-700/50">
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-12 text-center text-slate-400"
+                  >
+                    <div className="flex justify-center items-center gap-3">
+                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                      Đang tải danh sách đơn hàng...
+                    </div>
+                  </td>
+                </tr>
+              ) : orders.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-12 text-center text-slate-500"
+                  >
+                    Chưa có đơn hàng nào được ghi nhận trong hệ thống.
+                  </td>
+                </tr>
+              ) : (
+                orders.map((order) => (
+                  <tr
+                    key={order.id}
+                    className="hover:bg-slate-800/40 transition-colors group align-top"
+                  >
+                    {/* Cột 1: Mã đơn & Bàn */}
+                    <td className="px-6 py-4">
+                      <p className="font-bold text-white text-sm mb-0.5">
+                        #{order.id.slice(0, 8).toUpperCase()}
                       </p>
+                      <p className="text-xs text-blue-400 font-medium">
+                        {order.tableNumber || "Mang đi (Takeaway)"}
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        {new Date(order.createdAt).toLocaleTimeString("vi-VN")}{" "}
+                        -{" "}
+                        {new Date(order.createdAt).toLocaleDateString("vi-VN")}
+                      </p>
+                    </td>
 
-                      <div className="flex items-center justify-between pt-3 border-t border-slate-700/50">
-                        <span className="text-xs font-medium text-slate-400 bg-slate-800/80 px-2 py-1 rounded-md">
-                          {order.time}
-                        </span>
-                        <span className="text-sm font-bold text-white">
-                          {order.amount}
-                        </span>
+                    {/* Cột 2: Chi tiết món */}
+                    <td className="px-6 py-4">
+                      <div className="space-y-1 max-w-xs">
+                        {order.details?.map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="text-xs text-slate-300 flex justify-between gap-4"
+                          >
+                            <span className="font-medium">
+                              • {item.menuItem?.name || "Món ăn"}
+                            </span>
+                            <span className="text-slate-400">
+                              x{item.quantity}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                    </td>
 
-                {columnOrders.length === 0 && (
-                  <div className="h-32 rounded-xl border border-dashed border-slate-700/50 flex items-center justify-center text-slate-500 text-sm opacity-50">
-                    Thả đơn hàng vào đây
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+                    {/* Cột 3: Tổng tiền */}
+                    <td className="px-6 py-4 font-bold text-green-400">
+                      {order.totalAmount?.toLocaleString("vi-VN")}đ
+                    </td>
+
+                    {/* Cột 4: Trạng thái */}
+                    <td className="px-6 py-4">
+                      {renderStatusBadge(order.status)}
+                    </td>
+
+                    {/* Cột 5: Hành động đổi trạng thái */}
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {order.status === "PENDING" && (
+                          <button
+                            onClick={() =>
+                              handleUpdateStatus(order.id, "PREPARING")
+                            }
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded-lg transition-colors shadow-md shadow-blue-500/20"
+                          >
+                            Nhận làm món
+                          </button>
+                        )}
+                        {order.status === "PREPARING" && (
+                          <button
+                            onClick={() =>
+                              handleUpdateStatus(order.id, "COMPLETED")
+                            }
+                            className="px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-xs font-medium rounded-lg transition-colors shadow-md shadow-green-500/20"
+                          >
+                            Hoàn tất đơn
+                          </button>
+                        )}
+                        {order.status === "COMPLETED" && (
+                          <span className="text-xs text-slate-500 italic">
+                            Đã xong
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
