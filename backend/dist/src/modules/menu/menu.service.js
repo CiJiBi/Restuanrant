@@ -18,34 +18,68 @@ let MenuService = class MenuService {
         this.menuRepository = menuRepository;
         this.prisma = prisma;
     }
-    async findAll(search, skip) {
-        return this.menuRepository.findAll({ search, skip, take: 20 });
+    async getNextItemCode() {
+        const items = await this.prisma.menuItem.findMany({
+            select: { itemCode: true },
+        });
+        let maxNumber = 0;
+        for (const item of items) {
+            const match = item.itemCode.match(/SP(\d+)/i);
+            if (match) {
+                const num = parseInt(match[1], 10);
+                if (num > maxNumber) {
+                    maxNumber = num;
+                }
+            }
+        }
+        const nextNumber = maxNumber + 1;
+        return `SP${String(nextNumber).padStart(2, "0")}`;
+    }
+    async getAllMenu() {
+        return await this.prisma.menuItem.findMany({
+            include: { category: true },
+            orderBy: { createdAt: "desc" },
+        });
     }
     async findOne(id) {
-        const item = await this.menuRepository.findById(id);
+        const item = await this.prisma.menuItem.findUnique({
+            where: { id },
+            include: { category: true },
+        });
         if (!item)
             throw new common_1.NotFoundException("Không tìm thấy món ăn này!");
         return item;
     }
-    async getAllMenu() {
-        const data = await this.prisma.menuItem.findMany({
-            include: { category: true },
-            orderBy: { createdAt: "desc" },
-        });
-        return data;
-    }
     async createMenuItem(data) {
-        const newItem = await this.prisma.menuItem.create({
-            data: {
-                itemCode: data.itemCode,
-                name: data.name,
-                price: Number(data.price) || 0,
-                stock: Number(data.stock) || 0,
-                imageUrl: data.imageUrl || "",
-                categoryId: Number(data.categoryId) || 1,
-            },
-        });
-        return newItem;
+        try {
+            const targetCategoryId = Number(data.categoryId) || 1;
+            let category = await this.prisma.category.findUnique({
+                where: { id: targetCategoryId },
+            });
+            if (!category) {
+                category = await this.prisma.category.create({
+                    data: { name: "Món chính" },
+                });
+            }
+            const newItem = await this.prisma.menuItem.create({
+                data: {
+                    itemCode: data.itemCode,
+                    name: data.name,
+                    price: Number(data.price) || 0,
+                    isAvailable: data.isAvailable !== undefined ? Boolean(data.isAvailable) : true,
+                    imageUrl: data.imageUrl || "",
+                    categoryId: category.id,
+                },
+            });
+            return newItem;
+        }
+        catch (error) {
+            if (error.code === "P2002") {
+                throw new common_1.BadRequestException("Mã sản phẩm (itemCode) này đã tồn tại trong hệ thống!");
+            }
+            console.error("🚨 LỖI KHI TẠO MÓN:", error);
+            throw error;
+        }
     }
     async updateMenuItem(id, data) {
         try {
@@ -54,16 +88,23 @@ let MenuService = class MenuService {
                 updateData.itemCode = String(data.itemCode);
             if (data.name !== undefined)
                 updateData.name = String(data.name);
-            if (data.price !== undefined)
-                updateData.price = Number(data.price);
-            if (data.stock !== undefined)
-                updateData.stock = Number(data.stock);
+            if (data.price !== undefined) {
+                const parsedPrice = Number(data.price);
+                if (isNaN(parsedPrice) || parsedPrice <= 0) {
+                    throw new common_1.BadRequestException("Giá bán phải lớn hơn 0!");
+                }
+                updateData.price = parsedPrice;
+            }
+            if (data.isAvailable !== undefined) {
+                updateData.isAvailable =
+                    data.isAvailable === true || data.isAvailable === "true";
+            }
             if (data.imageUrl !== undefined)
                 updateData.imageUrl = String(data.imageUrl);
             if (data.categoryId !== undefined && data.categoryId !== "") {
                 updateData.categoryId = Number(data.categoryId);
             }
-            console.log("Dữ liệu gửi vào Prisma:", updateData);
+            console.log("Dữ liệu cập nhật vào Prisma:", updateData);
             const updatedItem = await this.prisma.menuItem.update({
                 where: { id },
                 data: updateData,
@@ -71,18 +112,7 @@ let MenuService = class MenuService {
             return updatedItem;
         }
         catch (error) {
-            console.error("🚨 LỖI PRISMA CHI TIẾT:", JSON.stringify(error, null, 2));
-            throw error;
-        }
-    }
-    async create(createMenuDto) {
-        try {
-            return await this.menuRepository.create(createMenuDto);
-        }
-        catch (error) {
-            if (error.code === "P2002") {
-                throw new common_1.BadRequestException("Mã sản phẩm (itemCode) đã tồn tại!");
-            }
+            console.error("🚨 LỖI PRISMA CHI TIẾT:", error.message);
             throw error;
         }
     }
@@ -97,10 +127,6 @@ let MenuService = class MenuService {
             where: { id },
         });
         return { success: true, message: "Đã xóa món ăn thành công" };
-    }
-    async remove(id) {
-        await this.findOne(id);
-        return this.menuRepository.softDelete(id);
     }
 };
 exports.MenuService = MenuService;

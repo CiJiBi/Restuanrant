@@ -13,6 +13,8 @@ const app_service_1 = require("./app.service");
 const menu_module_1 = require("./modules/menu/menu.module");
 const orders_module_1 = require("./modules/orders/orders.module");
 const auth_module_1 = require("./modules/auth/auth.module");
+const table_module_1 = require("./modules/table/table.module");
+const prisma_service_1 = require("./prisma/prisma.service");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -22,9 +24,10 @@ exports.AppModule = AppModule = __decorate([
             menu_module_1.MenuModule,
             orders_module_1.OrdersModule,
             auth_module_1.AuthModule,
+            table_module_1.TableModule,
         ],
         controllers: [app_controller_1.AppController],
-        providers: [app_service_1.AppService],
+        providers: [app_service_1.AppService, prisma_service_1.PrismaService],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

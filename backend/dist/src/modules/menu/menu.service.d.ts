@@ -1,102 +1,72 @@
 import { MenuRepository } from "./repositories/menu.repository";
-import { CreateMenuItemDto } from "./dto/create-menu-item.dto";
 import { PrismaService } from "../../prisma/prisma.service";
 export declare class MenuService {
     private readonly menuRepository;
     private prisma;
     constructor(menuRepository: MenuRepository, prisma: PrismaService);
-    findAll(search?: string, skip?: number): Promise<({
+    getNextItemCode(): Promise<string>;
+    getAllMenu(): Promise<({
         category: {
-            name: string;
-            description: string | null;
             id: number;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
         };
     } & {
-        name: string;
         id: string;
         itemCode: string;
-        price: number;
-        stock: number;
+        name: string;
+        price: import("@prisma/client/runtime/library").Decimal;
+        isAvailable: boolean;
         status: string;
-        imageUrl: string | null;
         isDeleted: boolean;
+        imageUrl: string | null;
         categoryId: number;
         createdAt: Date;
         updatedAt: Date;
     })[]>;
     findOne(id: string): Promise<{
         category: {
-            name: string;
-            description: string | null;
             id: number;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
         };
     } & {
-        name: string;
         id: string;
         itemCode: string;
-        price: number;
-        stock: number;
+        name: string;
+        price: import("@prisma/client/runtime/library").Decimal;
+        isAvailable: boolean;
         status: string;
-        imageUrl: string | null;
         isDeleted: boolean;
+        imageUrl: string | null;
         categoryId: number;
         createdAt: Date;
         updatedAt: Date;
     }>;
-    getAllMenu(): Promise<({
-        category: {
-            name: string;
-            description: string | null;
-            id: number;
-        };
-    } & {
-        name: string;
-        id: string;
-        itemCode: string;
-        price: number;
-        stock: number;
-        status: string;
-        imageUrl: string | null;
-        isDeleted: boolean;
-        categoryId: number;
-        createdAt: Date;
-        updatedAt: Date;
-    })[]>;
     createMenuItem(data: any): Promise<{
-        name: string;
         id: string;
         itemCode: string;
-        price: number;
-        stock: number;
+        name: string;
+        price: import("@prisma/client/runtime/library").Decimal;
+        isAvailable: boolean;
         status: string;
-        imageUrl: string | null;
         isDeleted: boolean;
+        imageUrl: string | null;
         categoryId: number;
         createdAt: Date;
         updatedAt: Date;
     }>;
     updateMenuItem(id: string, data: any): Promise<{
-        name: string;
         id: string;
         itemCode: string;
-        price: number;
-        stock: number;
-        status: string;
-        imageUrl: string | null;
-        isDeleted: boolean;
-        categoryId: number;
-        createdAt: Date;
-        updatedAt: Date;
-    }>;
-    create(createMenuDto: CreateMenuItemDto): Promise<{
         name: string;
-        id: string;
-        itemCode: string;
-        price: number;
-        stock: number;
+        price: import("@prisma/client/runtime/library").Decimal;
+        isAvailable: boolean;
         status: string;
-        imageUrl: string | null;
         isDeleted: boolean;
+        imageUrl: string | null;
         categoryId: number;
         createdAt: Date;
         updatedAt: Date;
@@ -105,5 +75,4 @@ export declare class MenuService {
         success: boolean;
         message: string;
     }>;
-    remove(id: string): Promise<boolean>;
 }

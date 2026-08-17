@@ -11,6 +11,7 @@ export declare class AuthService {
             access_token: string;
             user: {
                 id: string;
+                name: any;
                 email: string;
                 role: string;
             };

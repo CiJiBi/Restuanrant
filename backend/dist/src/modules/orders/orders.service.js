@@ -19,9 +19,11 @@ let OrdersService = class OrdersService {
     async getAllOrders() {
         const data = await this.prisma.order.findMany({
             include: {
-                details: {
+                orderItems: {
                     include: { menuItem: true },
                 },
+                table: true,
+                user: true,
             },
             orderBy: { createdAt: "desc" },
         });
@@ -35,20 +37,26 @@ let OrdersService = class OrdersService {
         return { success: true, message: "Cập nhật thành công", data: updated };
     }
     async createOrder(data) {
-        const orderNum = data.orderNumber || `DH-${Math.floor(Math.random() * 10000)}`;
+        const orderNum = data.orderNumber || `DH-${Math.floor(1000 + Math.random() * 9000)}`;
         const newOrder = await this.prisma.order.create({
             data: {
                 orderNumber: orderNum,
                 totalAmount: data.totalAmount || 0,
-                status: data.status || "pending",
-                tableNumber: data.tableNumber || "Mang đi",
-                customer: data.customer || "Khách vãng lai",
-                details: {
+                status: data.status || "PENDING",
+                note: data.note || (data.customer ? `Khách: ${data.customer}` : undefined),
+                tableId: data.tableId ? Number(data.tableId) : undefined,
+                userId: data.userId || undefined,
+                orderItems: {
                     create: data.items?.map((item) => ({
-                        menuItemId: item.id,
-                        quantity: item.quantity,
-                        unitPrice: item.price,
+                        menuItemId: item.id || item.menuItemId,
+                        quantity: Number(item.quantity) || 1,
+                        price: Number(item.price) || 0,
                     })) || [],
+                },
+            },
+            include: {
+                orderItems: {
+                    include: { menuItem: true },
                 },
             },
         });

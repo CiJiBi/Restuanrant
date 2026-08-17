@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateMenuItemDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
+const class_transformer_1 = require("class-transformer");
 class CreateMenuItemDto {
 }
 exports.CreateMenuItemDto = CreateMenuItemDto;
@@ -28,28 +29,34 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 25000, description: "Giá bán" }),
     (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(0),
+    (0, class_transformer_1.Type)(() => Number),
+    (0, class_validator_1.Min)(1, { message: "Giá bán phải lớn hơn 0!" }),
     __metadata("design:type", Number)
 ], CreateMenuItemDto.prototype, "price", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 100, description: "Số lượng tồn kho" }),
-    (0, class_validator_1.IsInt)(),
-    (0, class_validator_1.Min)(0),
-    __metadata("design:type", Number)
-], CreateMenuItemDto.prototype, "stock", void 0);
-__decorate([
     (0, swagger_1.ApiProperty)({ example: 1, description: "ID của danh mục (Category)" }),
     (0, class_validator_1.IsInt)(),
+    (0, class_transformer_1.Type)(() => Number),
     __metadata("design:type", Number)
 ], CreateMenuItemDto.prototype, "categoryId", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
         required: false,
-        example: "https://...",
+        example: true,
+        description: "Trạng thái phục vụ",
+    }),
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateMenuItemDto.prototype, "isAvailable", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        required: false,
+        example: "https://example.com/image.jpg",
         description: "Link ảnh sản phẩm",
     }),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsUrl)(),
+    (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateMenuItemDto.prototype, "imageUrl", void 0);
 //# sourceMappingURL=create-menu-item.dto.js.map

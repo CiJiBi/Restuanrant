@@ -3,63 +3,116 @@ export declare class OrdersService {
     private prisma;
     constructor(prisma: PrismaService);
     getAllOrders(): Promise<({
-        details: ({
+        user: {
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            id: string;
+            email: string;
+            password: string;
+            role: string;
+        };
+        table: {
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            id: number;
+            status: string;
+            totalAmount: string | null;
+            orderId: string | null;
+            capacity: number;
+            guestName: string | null;
+            timeSeated: string | null;
+        };
+        orderItems: ({
             menuItem: {
                 name: string;
-                id: string;
-                itemCode: string;
-                price: number;
-                stock: number;
-                status: string;
-                imageUrl: string | null;
-                isDeleted: boolean;
-                categoryId: number;
                 createdAt: Date;
                 updatedAt: Date;
+                id: string;
+                itemCode: string;
+                price: import("@prisma/client/runtime/library").Decimal;
+                isAvailable: boolean;
+                status: string;
+                isDeleted: boolean;
+                imageUrl: string | null;
+                categoryId: number;
             };
         } & {
+            createdAt: Date;
+            updatedAt: Date;
             id: string;
+            price: import("@prisma/client/runtime/library").Decimal;
             quantity: number;
-            unitPrice: number;
             menuItemId: string;
             orderId: string;
         })[];
     } & {
+        createdAt: Date;
+        updatedAt: Date;
         id: string;
         status: string;
-        createdAt: Date;
         orderNumber: string;
-        customer: string | null;
-        tableNumber: string | null;
-        totalAmount: number;
-        notes: string | null;
+        paymentStatus: string;
+        totalAmount: import("@prisma/client/runtime/library").Decimal;
+        tableId: number | null;
+        userId: string | null;
+        note: string | null;
     })[]>;
     updateOrderStatus(id: string, status: string): Promise<{
         success: boolean;
         message: string;
         data: {
+            createdAt: Date;
+            updatedAt: Date;
             id: string;
             status: string;
-            createdAt: Date;
             orderNumber: string;
-            customer: string | null;
-            tableNumber: string | null;
-            totalAmount: number;
-            notes: string | null;
+            paymentStatus: string;
+            totalAmount: import("@prisma/client/runtime/library").Decimal;
+            tableId: number | null;
+            userId: string | null;
+            note: string | null;
         };
     }>;
     createOrder(data: any): Promise<{
         success: boolean;
         message: string;
         data: {
+            orderItems: ({
+                menuItem: {
+                    name: string;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    id: string;
+                    itemCode: string;
+                    price: import("@prisma/client/runtime/library").Decimal;
+                    isAvailable: boolean;
+                    status: string;
+                    isDeleted: boolean;
+                    imageUrl: string | null;
+                    categoryId: number;
+                };
+            } & {
+                createdAt: Date;
+                updatedAt: Date;
+                id: string;
+                price: import("@prisma/client/runtime/library").Decimal;
+                quantity: number;
+                menuItemId: string;
+                orderId: string;
+            })[];
+        } & {
+            createdAt: Date;
+            updatedAt: Date;
             id: string;
             status: string;
-            createdAt: Date;
             orderNumber: string;
-            customer: string | null;
-            tableNumber: string | null;
-            totalAmount: number;
-            notes: string | null;
+            paymentStatus: string;
+            totalAmount: import("@prisma/client/runtime/library").Decimal;
+            tableId: number | null;
+            userId: string | null;
+            note: string | null;
         };
     }>;
 }

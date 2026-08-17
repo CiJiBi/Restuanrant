@@ -2,11 +2,12 @@ import {
   IsString,
   IsNumber,
   IsOptional,
+  IsBoolean,
   Min,
-  IsUrl,
   IsInt,
 } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
+import { Type } from "class-transformer";
 
 export class CreateMenuItemDto {
   @ApiProperty({ example: "SP001", description: "Mã sản phẩm duy nhất" })
@@ -19,24 +20,30 @@ export class CreateMenuItemDto {
 
   @ApiProperty({ example: 25000, description: "Giá bán" })
   @IsNumber()
-  @Min(0)
+  @Type(() => Number)
+  @Min(1, { message: "Giá bán phải lớn hơn 0!" })
   price!: number;
-
-  @ApiProperty({ example: 100, description: "Số lượng tồn kho" })
-  @IsInt()
-  @Min(0)
-  stock!: number;
 
   @ApiProperty({ example: 1, description: "ID của danh mục (Category)" })
   @IsInt()
+  @Type(() => Number)
   categoryId!: number;
 
   @ApiProperty({
     required: false,
-    example: "https://...",
+    example: true,
+    description: "Trạng thái phục vụ",
+  })
+  @IsBoolean()
+  @IsOptional()
+  isAvailable?: boolean;
+
+  @ApiProperty({
+    required: false,
+    example: "https://example.com/image.jpg",
     description: "Link ảnh sản phẩm",
   })
   @IsOptional()
-  @IsUrl()
+  @IsString() // Đã đổi từ IsUrl sang IsString để cho phép để trống hoặc nhập linh hoạt
   imageUrl?: string;
 }

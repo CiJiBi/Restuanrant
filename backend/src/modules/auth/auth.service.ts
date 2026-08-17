@@ -22,15 +22,14 @@ export class AuthService {
       throw new UnauthorizedException("Email hoặc mật khẩu không chính xác!");
     }
 
-    // 2. Kiểm tra mật khẩu (Giả định bạn dùng bcrypt để mã hóa)
-    // Nếu bạn đang lưu mật khẩu thô (chưa mã hóa), tạm thời dùng: const isPasswordValid = (password === user.password);
+    // 2. Kiểm tra mật khẩu
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException("Email hoặc mật khẩu không chính xác!");
     }
 
-    // 3. Tạo thẻ từ (JWT Token)
+    // 3. Tạo JWT Token
     const payload = {
       sub: user.id,
       email: user.email,
@@ -44,6 +43,7 @@ export class AuthService {
         access_token: this.jwtService.sign(payload),
         user: {
           id: user.id,
+          name: (user as any).name || "Quản trị viên",
           email: user.email,
           role: user.role,
         },
@@ -51,7 +51,7 @@ export class AuthService {
     };
   }
 
-  // Tiện ích: Hàm tạo tài khoản Admin mẫu (để bạn test đăng nhập)
+  // Hàm tạo tài khoản Admin mẫu
   async registerMockAdmin() {
     const hashedPassword = await bcrypt.hash("password123", 10);
     const user = await this.prisma.user.upsert({
@@ -59,6 +59,7 @@ export class AuthService {
       update: {},
       create: {
         email: "admin@cijibi.com",
+        name: "Admin Quản Trị", // Đã bổ sung trường name bắt buộc
         password: hashedPassword,
         role: "ADMIN",
       },

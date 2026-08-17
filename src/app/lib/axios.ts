@@ -1,21 +1,21 @@
 import axios from "axios";
 
+// Khởi tạo instance kết nối với Backend
 const api = axios.create({
   baseURL: "http://localhost:4000",
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
+// THÊM INTERCEPTOR: Tự động đính kèm Token vào MỌI request gửi đi
 api.interceptors.request.use(
   (config) => {
+    // Chỉ gọi localStorage khi code đang chạy trên trình duyệt (tránh lỗi Next.js SSR)
     if (typeof window !== "undefined") {
-      let token = localStorage.getItem("cijibi_token");
-
+      const token = localStorage.getItem("cijibi_token");
       if (token) {
-        // Loại bỏ toàn bộ dấu ngoặc kép thừa hoặc khoảng trắng xung quanh
-        token = token.replace(/^["'](.+(?=["']$))["']$/, "$1").trim();
-
-        if (config.headers) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
+        config.headers.Authorization = `Bearer ${token}`; // Nhét "thẻ VIP" vào đây
       }
     }
     return config;

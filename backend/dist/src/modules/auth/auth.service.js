@@ -76,6 +76,7 @@ let AuthService = class AuthService {
                 access_token: this.jwtService.sign(payload),
                 user: {
                     id: user.id,
+                    name: user.name || "Quản trị viên",
                     email: user.email,
                     role: user.role,
                 },
@@ -89,6 +90,7 @@ let AuthService = class AuthService {
             update: {},
             create: {
                 email: "admin@cijibi.com",
+                name: "Admin Quản Trị",
                 password: hashedPassword,
                 role: "ADMIN",
             },

@@ -26,7 +26,7 @@ interface Order {
   totalAmount: number;
   status: string;
   createdAt: string;
-  details: OrderItem[];
+  orderItems: OrderItem[];
 }
 
 export default function OrdersManagementPage() {
@@ -189,7 +189,7 @@ export default function OrdersManagementPage() {
                       {/* Cột 2: Chi tiết món */}
                       <td className="px-6 py-4">
                         <div className="space-y-1 max-w-xs">
-                          {order.details?.map((item, idx) => (
+                          {order.orderItems?.map((item, idx) => (
                             <div
                               key={idx}
                               className="text-xs text-slate-300 flex justify-between gap-4"

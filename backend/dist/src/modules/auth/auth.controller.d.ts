@@ -9,12 +9,17 @@ export declare class AuthController {
             access_token: string;
             user: {
                 id: string;
+                name: any;
                 email: string;
                 role: string;
             };
         };
     }>;
     registerAdmin(): Promise<{
+        message: string;
+        email: string;
+    }>;
+    setupAdmin(): Promise<{
         message: string;
         email: string;
     }>;

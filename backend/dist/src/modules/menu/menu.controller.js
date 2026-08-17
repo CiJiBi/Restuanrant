@@ -16,95 +16,77 @@ exports.MenuController = void 0;
 const common_1 = require("@nestjs/common");
 const menu_service_1 = require("./menu.service");
 const create_menu_item_dto_1 = require("./dto/create-menu-item.dto");
-const swagger_1 = require("@nestjs/swagger");
-const jwt_auth_guard_1 = require("../../core/guards/jwt-auth.guard");
+const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 let MenuController = class MenuController {
     constructor(menuService) {
         this.menuService = menuService;
     }
-    getAllMenu() {
-        return this.menuService.getAllMenu();
+    async getNextCode() {
+        return await this.menuService.getNextItemCode();
     }
-    createMenuItem(data) {
-        return this.menuService.createMenuItem(data);
+    async findAll() {
+        return await this.menuService.getAllMenu();
     }
-    updateMenuItem(id, body) {
-        return this.menuService.updateMenuItem(id, body);
+    async findOne(id) {
+        return await this.menuService.findOne(id);
     }
-    deleteMenuItem(id) {
-        return this.menuService.deleteMenuItem(id);
+    async create(createMenuItemDto) {
+        return await this.menuService.createMenuItem(createMenuItemDto);
     }
-    findAll(search, skip) {
-        return this.menuService.findAll(search, skip);
+    async update(id, body) {
+        return await this.menuService.updateMenuItem(id, body);
     }
-    findOne(id) {
-        return this.menuService.findOne(id);
-    }
-    create(createMenuDto) {
-        return this.menuService.create(createMenuDto);
+    async delete(id) {
+        return await this.menuService.deleteMenuItem(id);
     }
 };
 exports.MenuController = MenuController;
 __decorate([
+    (0, common_1.Get)("next-code"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], MenuController.prototype, "getNextCode", null);
+__decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], MenuController.prototype, "getAllMenu", null);
-__decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], MenuController.prototype, "createMenuItem", null);
-__decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Patch)(":id"),
-    __param(0, (0, common_1.Param)("id")),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0)
-], MenuController.prototype, "updateMenuItem", null);
-__decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, common_1.Delete)(":id"),
-    __param(0, (0, common_1.Param)("id")),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], MenuController.prototype, "deleteMenuItem", null);
-__decorate([
-    (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: "Lấy danh sách món ăn" }),
-    __param(0, (0, common_1.Query)("search")),
-    __param(1, (0, common_1.Query)("skip")),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Number]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], MenuController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(":id"),
-    (0, swagger_1.ApiOperation)({ summary: "Lấy chi tiết một món ăn" }),
     __param(0, (0, common_1.Param)("id")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], MenuController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Post)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, swagger_1.ApiOperation)({ summary: "Thêm món ăn mới (Yêu cầu đăng nhập)" }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_menu_item_dto_1.CreateMenuItemDto]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], MenuController.prototype, "create", null);
+__decorate([
+    (0, common_1.Patch)(":id"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)("id")),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], MenuController.prototype, "update", null);
+__decorate([
+    (0, common_1.Delete)(":id"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)("id")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], MenuController.prototype, "delete", null);
 exports.MenuController = MenuController = __decorate([
-    (0, swagger_1.ApiTags)("Menu (Thực đơn)"),
     (0, common_1.Controller)("menu"),
     __metadata("design:paramtypes", [menu_service_1.MenuService])
 ], MenuController);

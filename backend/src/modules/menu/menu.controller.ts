@@ -2,58 +2,54 @@ import {
   Controller,
   Get,
   Post,
-  Body,
-  Param,
   Patch,
   Delete,
-  Query,
+  Body,
+  Param,
   UseGuards,
 } from "@nestjs/common";
 import { MenuService } from "./menu.service";
 import { CreateMenuItemDto } from "./dto/create-menu-item.dto";
-import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
-import { JwtAuthGuard } from "../../core/guards/jwt-auth.guard";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 
-@ApiTags("Menu (Thực đơn)")
 @Controller("menu")
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
+
+  // Route lấy mã sản phẩm tự động tiếp theo (VD: SP03)
+  @Get("next-code")
+  @UseGuards(JwtAuthGuard)
+  async getNextCode() {
+    return await this.menuService.getNextItemCode();
+  }
+
   @Get()
-  getAllMenu() {
-    return this.menuService.getAllMenu();
-  }
-  @UseGuards(JwtAuthGuard)
-  @Post()
-  createMenuItem(@Body() data: any) {
-    return this.menuService.createMenuItem(data);
-  }
-  @UseGuards(JwtAuthGuard)
-  @Patch(":id")
-  updateMenuItem(@Param("id") id: string, @Body() body: any) {
-    return this.menuService.updateMenuItem(id, body);
-  }
-  @UseGuards(JwtAuthGuard)
-  @Delete(":id")
-  deleteMenuItem(@Param("id") id: string) {
-    return this.menuService.deleteMenuItem(id);
-  }
-  @Get()
-  @ApiOperation({ summary: "Lấy danh sách món ăn" })
-  findAll(@Query("search") search?: string, @Query("skip") skip?: number) {
-    return this.menuService.findAll(search, skip);
+  async findAll() {
+    // Sử dụng getAllMenu để lấy đầy đủ kèm category và sắp xếp mới nhất
+    return await this.menuService.getAllMenu();
   }
 
   @Get(":id")
-  @ApiOperation({ summary: "Lấy chi tiết một món ăn" })
-  findOne(@Param("id") id: string) {
-    return this.menuService.findOne(id);
+  async findOne(@Param("id") id: string) {
+    return await this.menuService.findOne(id);
   }
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
-  @ApiOperation({ summary: "Thêm món ăn mới (Yêu cầu đăng nhập)" })
-  create(@Body() createMenuDto: CreateMenuItemDto) {
-    return this.menuService.create(createMenuDto);
+  async create(@Body() createMenuItemDto: CreateMenuItemDto) {
+    // Thay đổi từ this.menuService.create thành this.menuService.createMenuItem
+    return await this.menuService.createMenuItem(createMenuItemDto);
+  }
+
+  @Patch(":id")
+  @UseGuards(JwtAuthGuard)
+  async update(@Param("id") id: string, @Body() body: any) {
+    return await this.menuService.updateMenuItem(id, body);
+  }
+
+  @Delete(":id")
+  @UseGuards(JwtAuthGuard)
+  async delete(@Param("id") id: string) {
+    return await this.menuService.deleteMenuItem(id);
   }
 }

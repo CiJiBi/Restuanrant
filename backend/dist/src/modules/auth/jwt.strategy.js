@@ -19,7 +19,7 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         super({
             jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
-            secretOrKey: process.env.JWT_SECRET || "cijibi-super-secret-key-2026",
+            secretOrKey: process.env.JWT_SECRET || "cijibi_super_secret_key_2026",
         });
         this.prisma = prisma;
     }
