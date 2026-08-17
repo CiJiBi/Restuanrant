@@ -1,18 +1,18 @@
 import { Controller, Post, Body } from "@nestjs/common";
 import { AuthService } from "./auth.service";
-import { AuthDto } from "./dto/auth.dto";
 
 @Controller("auth")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post("register")
-  register(@Body() authDto: AuthDto) {
-    return this.authService.register(authDto);
+  @Post("login")
+  login(@Body() loginDto: any) {
+    return this.authService.login(loginDto);
   }
 
-  @Post("login")
-  login(@Body() authDto: AuthDto) {
-    return this.authService.login(authDto);
+  // API ẩn để bạn tự tạo tài khoản Admin ban đầu: POST /auth/register-admin
+  @Post("register-admin")
+  registerAdmin() {
+    return this.authService.registerMockAdmin();
   }
 }

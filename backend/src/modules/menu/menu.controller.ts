@@ -29,8 +29,8 @@ export class MenuController {
   }
   @UseGuards(JwtAuthGuard)
   @Patch(":id")
-  updateMenuItem(@Param("id") id: string, @Body() data: any) {
-    return this.menuService.updateMenuItem(id, data);
+  updateMenuItem(@Param("id") id: string, @Body() body: any) {
+    return this.menuService.updateMenuItem(id, body);
   }
   @UseGuards(JwtAuthGuard)
   @Delete(":id")

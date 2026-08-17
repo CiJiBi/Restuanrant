@@ -13,7 +13,6 @@ async function bootstrap() {
         methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
         credentials: true,
     });
-    app.enableCors();
     app.useGlobalPipes(new common_1.ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
     app.useGlobalInterceptors(new transform_interceptor_1.TransformInterceptor());
     app.useGlobalFilters(new http_exception_filter_1.AllExceptionsFilter());

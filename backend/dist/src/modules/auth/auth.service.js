@@ -44,50 +44,56 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
-const jwt_1 = require("@nestjs/jwt");
 const prisma_service_1 = require("../../prisma/prisma.service");
+const jwt_1 = require("@nestjs/jwt");
 const bcrypt = __importStar(require("bcrypt"));
 let AuthService = class AuthService {
     constructor(prisma, jwtService) {
         this.prisma = prisma;
         this.jwtService = jwtService;
     }
-    async register(authDto) {
-        const existingUser = await this.prisma.user.findUnique({
-            where: { email: authDto.email },
+    async login(loginDto) {
+        const { email, password } = loginDto;
+        const user = await this.prisma.user.findUnique({
+            where: { email },
         });
-        if (existingUser)
-            throw new common_1.BadRequestException("Email này đã được sử dụng!");
-        const hashedPassword = await bcrypt.hash(authDto.password, 10);
-        const user = await this.prisma.user.create({
+        if (!user) {
+            throw new common_1.UnauthorizedException("Email hoặc mật khẩu không chính xác!");
+        }
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            throw new common_1.UnauthorizedException("Email hoặc mật khẩu không chính xác!");
+        }
+        const payload = {
+            sub: user.id,
+            email: user.email,
+            role: user.role,
+        };
+        return {
+            success: true,
+            message: "Đăng nhập thành công",
             data: {
-                email: authDto.email,
+                access_token: this.jwtService.sign(payload),
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    role: user.role,
+                },
+            },
+        };
+    }
+    async registerMockAdmin() {
+        const hashedPassword = await bcrypt.hash("password123", 10);
+        const user = await this.prisma.user.upsert({
+            where: { email: "admin@cijibi.com" },
+            update: {},
+            create: {
+                email: "admin@cijibi.com",
                 password: hashedPassword,
                 role: "ADMIN",
             },
         });
-        return this.generateToken(user.id, user.email, user.role);
-    }
-    async login(authDto) {
-        const user = await this.prisma.user.findUnique({
-            where: { email: authDto.email },
-        });
-        if (!user)
-            throw new common_1.UnauthorizedException("Tài khoản không tồn tại!");
-        const isPasswordMatch = await bcrypt.compare(authDto.password, user.password);
-        if (!isPasswordMatch)
-            throw new common_1.UnauthorizedException("Sai mật khẩu!");
-        return this.generateToken(user.id, user.email, user.role);
-    }
-    generateToken(userId, email, role) {
-        const payload = { sub: userId, email, role };
-        return {
-            success: true,
-            data: {
-                access_token: this.jwtService.sign(payload),
-                user: { id: userId, email, role },
-            },
-        };
+        return { message: "Tạo tài khoản thành công!", email: user.email };
     }
 };
 exports.AuthService = AuthService;

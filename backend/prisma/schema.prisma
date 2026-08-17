@@ -23,42 +23,47 @@ model Category {
 }
 
 model MenuItem {
-  id          String   @id @default(uuid())
-  itemCode    String   @unique
-  name        String
-  price       Float
-  stock       Int      @default(0)
-  status      String   @default("Đang bán")
-  imageUrl    String?
-  isDeleted   Boolean  @default(false)
-  categoryId  Int
-  category    Category @relation(fields: [categoryId], references: [id])
+  id         String   @id @default(uuid())
+  itemCode   String   @unique
+  name       String
+  price      Float
+  stock      Int      @default(0)
+  status     String   @default("Đang bán")
+  imageUrl   String?
+  isDeleted  Boolean  @default(false)
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+
   orderDetails OrderDetail[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  orderItems   OrderItem[] // <--- HÃY THÊM DÒNG NÀY VÀO ĐÂY
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Order {
-  id          String   @id @default(uuid())
-  orderNumber String   @unique
-  customer    String?  // Có thể link tới bảng Customer
+  id          String        @id @default(uuid())
+  orderNumber String        @unique
+  customer    String? // Có thể link tới bảng Customer
   tableNumber String?
   totalAmount Float
-  status      String   @default("pending") // pending, cooking, ready, completed
+  status      String        @default("pending") // pending, cooking, ready, completed
   notes       String?
   details     OrderDetail[]
-  createdAt   DateTime @default(now())
+  createdAt   DateTime      @default(now())
   orderItems  OrderItem[]
 }
+
 model OrderItem {
-  id         String    @id @default(uuid())
+  id         String   @id @default(uuid())
   orderId    String
-  order      Order     @relation(fields: [orderId], references: [id])
+  order      Order    @relation(fields: [orderId], references: [id])
   menuItemId String
-  menuItem   MenuItem  @relation(fields: [menuItemId], references: [id])
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
   quantity   Int
   price      Float
 }
+
 model OrderDetail {
   id         String   @id @default(uuid())
   orderId    String

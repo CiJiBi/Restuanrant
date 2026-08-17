@@ -43,7 +43,7 @@ export default function OrdersManagementPage() {
       const response = await api.get("/orders");
       const payload = response.data;
 
-      // Xử lý bóc tách dữ liệu thông minh qua các lớp của NestJS
+      // Xử lý bóc tách dữ liệu
       if (payload?.data && Array.isArray(payload.data)) {
         setOrders(payload.data);
       } else if (Array.isArray(payload)) {
@@ -59,19 +59,21 @@ export default function OrdersManagementPage() {
     }
   };
 
-  // Hàm chuyển đổi trạng thái đơn hàng
+  // Hàm chuyển đổi trạng thái đơn hàng (Đã dọn dẹp hàm thừa)
   const handleUpdateStatus = async (id: string, newStatus: string) => {
     try {
       await api.patch(`/orders/${id}/status`, { status: newStatus });
+      alert("Cập nhật trạng thái thành công!");
       fetchOrders(); // Tải lại danh sách sau khi đổi trạng thái
     } catch (error: any) {
       alert(error.response?.data?.message || "Không thể cập nhật trạng thái!");
     }
   };
 
-  // Hàm hiển thị Badge trạng thái tương ứng
+  // Hàm hiển thị Badge trạng thái (Đã thêm toUpperCase() để tránh lỗi chữ hoa/thường)
   const renderStatusBadge = (status: string) => {
-    switch (status) {
+    const safeStatus = status?.toUpperCase() || "";
+    switch (safeStatus) {
       case "PENDING":
         return (
           <span className="px-3 py-1 rounded-md bg-yellow-500/10 text-yellow-400 text-xs font-medium border border-yellow-500/20 flex items-center gap-1.5 w-fit">
@@ -79,6 +81,7 @@ export default function OrdersManagementPage() {
           </span>
         );
       case "PREPARING":
+      case "COOKING": // Phòng trường hợp bạn dùng chữ cooking
         return (
           <span className="px-3 py-1 rounded-md bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-500/20 flex items-center gap-1.5 w-fit">
             <Truck size={12} /> Đang chuẩn bị
@@ -155,87 +158,97 @@ export default function OrdersManagementPage() {
                   </td>
                 </tr>
               ) : (
-                orders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-slate-800/40 transition-colors group align-top"
-                  >
-                    {/* Cột 1: Mã đơn & Bàn */}
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-white text-sm mb-0.5">
-                        #{order.id.slice(0, 8).toUpperCase()}
-                      </p>
-                      <p className="text-xs text-blue-400 font-medium">
-                        {order.tableNumber || "Mang đi (Takeaway)"}
-                      </p>
-                      <p className="text-[11px] text-slate-500 mt-1">
-                        {new Date(order.createdAt).toLocaleTimeString("vi-VN")}{" "}
-                        -{" "}
-                        {new Date(order.createdAt).toLocaleDateString("vi-VN")}
-                      </p>
-                    </td>
+                orders.map((order) => {
+                  // Đảm bảo chữ hoa để so sánh chính xác
+                  const currentStatus = order.status?.toUpperCase() || "";
 
-                    {/* Cột 2: Chi tiết món */}
-                    <td className="px-6 py-4">
-                      <div className="space-y-1 max-w-xs">
-                        {order.details?.map((item, idx) => (
-                          <div
-                            key={idx}
-                            className="text-xs text-slate-300 flex justify-between gap-4"
-                          >
-                            <span className="font-medium">
-                              • {item.menuItem?.name || "Món ăn"}
+                  return (
+                    <tr
+                      key={order.id}
+                      className="hover:bg-slate-800/40 transition-colors group align-top"
+                    >
+                      {/* Cột 1: Mã đơn & Bàn */}
+                      <td className="px-6 py-4">
+                        <p className="font-bold text-white text-sm mb-0.5">
+                          #{order.id.slice(0, 8).toUpperCase()}
+                        </p>
+                        <p className="text-xs text-blue-400 font-medium">
+                          {order.tableNumber || "Mang đi (Takeaway)"}
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          {new Date(order.createdAt).toLocaleTimeString(
+                            "vi-VN",
+                          )}{" "}
+                          -{" "}
+                          {new Date(order.createdAt).toLocaleDateString(
+                            "vi-VN",
+                          )}
+                        </p>
+                      </td>
+
+                      {/* Cột 2: Chi tiết món */}
+                      <td className="px-6 py-4">
+                        <div className="space-y-1 max-w-xs">
+                          {order.details?.map((item, idx) => (
+                            <div
+                              key={idx}
+                              className="text-xs text-slate-300 flex justify-between gap-4"
+                            >
+                              <span className="font-medium truncate mr-2">
+                                • {item.menuItem?.name || "Món ăn"}
+                              </span>
+                              <span className="text-slate-400 whitespace-nowrap">
+                                x{item.quantity}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+
+                      {/* Cột 3: Tổng tiền */}
+                      <td className="px-6 py-4 font-bold text-green-400">
+                        {order.totalAmount?.toLocaleString("vi-VN")}đ
+                      </td>
+
+                      {/* Cột 4: Trạng thái */}
+                      <td className="px-6 py-4">
+                        {renderStatusBadge(order.status)}
+                      </td>
+
+                      {/* Cột 5: Hành động đổi trạng thái */}
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {currentStatus === "PENDING" && (
+                            <button
+                              onClick={() =>
+                                handleUpdateStatus(order.id, "PREPARING")
+                              }
+                              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded-lg transition-colors shadow-md shadow-blue-500/20"
+                            >
+                              Nhận làm món
+                            </button>
+                          )}
+                          {(currentStatus === "PREPARING" ||
+                            currentStatus === "COOKING") && (
+                            <button
+                              onClick={() =>
+                                handleUpdateStatus(order.id, "COMPLETED")
+                              }
+                              className="px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-xs font-medium rounded-lg transition-colors shadow-md shadow-green-500/20"
+                            >
+                              Hoàn tất đơn
+                            </button>
+                          )}
+                          {currentStatus === "COMPLETED" && (
+                            <span className="text-xs text-slate-500 italic">
+                              Đã xong
                             </span>
-                            <span className="text-slate-400">
-                              x{item.quantity}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </td>
-
-                    {/* Cột 3: Tổng tiền */}
-                    <td className="px-6 py-4 font-bold text-green-400">
-                      {order.totalAmount?.toLocaleString("vi-VN")}đ
-                    </td>
-
-                    {/* Cột 4: Trạng thái */}
-                    <td className="px-6 py-4">
-                      {renderStatusBadge(order.status)}
-                    </td>
-
-                    {/* Cột 5: Hành động đổi trạng thái */}
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {order.status === "PENDING" && (
-                          <button
-                            onClick={() =>
-                              handleUpdateStatus(order.id, "PREPARING")
-                            }
-                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded-lg transition-colors shadow-md shadow-blue-500/20"
-                          >
-                            Nhận làm món
-                          </button>
-                        )}
-                        {order.status === "PREPARING" && (
-                          <button
-                            onClick={() =>
-                              handleUpdateStatus(order.id, "COMPLETED")
-                            }
-                            className="px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-xs font-medium rounded-lg transition-colors shadow-md shadow-green-500/20"
-                          >
-                            Hoàn tất đơn
-                          </button>
-                        )}
-                        {order.status === "COMPLETED" && (
-                          <span className="text-xs text-slate-500 italic">
-                            Đã xong
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

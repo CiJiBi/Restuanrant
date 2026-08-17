@@ -8,17 +8,25 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrdersController = void 0;
 const common_1 = require("@nestjs/common");
 const orders_service_1 = require("./orders.service");
-const jwt_auth_guard_1 = require("../../core/guards/jwt-auth.guard");
 let OrdersController = class OrdersController {
     constructor(ordersService) {
         this.ordersService = ordersService;
     }
     getAllOrders() {
         return this.ordersService.getAllOrders();
+    }
+    updateStatus(id, status) {
+        return this.ordersService.updateOrderStatus(id, status);
+    }
+    createOrder(body) {
+        return this.ordersService.createOrder(body);
     }
 };
 exports.OrdersController = OrdersController;
@@ -28,8 +36,22 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "getAllOrders", null);
+__decorate([
+    (0, common_1.Patch)(":id/status"),
+    __param(0, (0, common_1.Param)("id")),
+    __param(1, (0, common_1.Body)("status")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "updateStatus", null);
+__decorate([
+    (0, common_1.Post)(),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "createOrder", null);
 exports.OrdersController = OrdersController = __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)("orders"),
     __metadata("design:paramtypes", [orders_service_1.OrdersService])
 ], OrdersController);

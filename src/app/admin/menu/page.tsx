@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import api from "../../lib/axios";
+import api from "../../lib/axios"; // Đảm bảo import api từ thư mục lib chuẩn
 import { Edit, Trash2, Plus, Search, Filter, X } from "lucide-react";
 
 interface MenuItem {
@@ -22,7 +22,7 @@ export default function MenuManagementPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // THÊM MỚI: Biến lưu ID của món đang sửa (Nếu null nghĩa là đang Thêm mới)
+  // Biến lưu ID của món đang sửa (Nếu null nghĩa là đang Thêm mới)
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [newItem, setNewItem] = useState({
@@ -61,7 +61,6 @@ export default function MenuManagementPage() {
     }
   };
 
-  // THÊM MỚI: Hàm mở Form để Sửa (Điền sẵn dữ liệu cũ vào Form)
   const handleOpenEdit = (item: MenuItem) => {
     setEditingId(item.id);
     setNewItem({
@@ -75,7 +74,6 @@ export default function MenuManagementPage() {
     setIsModalOpen(true);
   };
 
-  // THÊM MỚI: Hàm đóng Form và dọn dẹp sạch sẽ
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingId(null);
@@ -89,7 +87,7 @@ export default function MenuManagementPage() {
     });
   };
 
-  // CẬP NHẬT: Hàm Lưu giờ đây xử lý được cả THÊM và SỬA
+  // Hàm Lưu (Xử lý cả Thêm và Sửa thông qua 'api' đã cấu hình token)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -101,15 +99,14 @@ export default function MenuManagementPage() {
       };
 
       if (editingId) {
-        // Nếu có editingId -> Gọi API Sửa (PATCH)
+        // Dùng api.patch để tự động đính kèm token, chống lỗi 401
         await api.patch(`/menu/${editingId}`, payload);
       } else {
-        // Nếu không có editingId -> Gọi API Thêm (POST)
         await api.post("/menu", payload);
       }
 
-      fetchMenu(); // Tải lại bảng
-      handleCloseModal(); // Đóng Popup
+      fetchMenu();
+      handleCloseModal();
       alert(
         editingId
           ? "✅ Cập nhật món ăn thành công!"
@@ -149,7 +146,7 @@ export default function MenuManagementPage() {
         </div>
         <button
           onClick={() => {
-            handleCloseModal(); // Reset form sạch sẽ trước khi Thêm mới
+            handleCloseModal();
             setIsModalOpen(true);
           }}
           className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors shadow-lg shadow-blue-500/20"
@@ -287,7 +284,7 @@ export default function MenuManagementPage() {
         </div>
       </div>
 
-      {/* Popup Modal Dùng chung cho Thêm & Sửa */}
+      {/* Popup Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-[#111827] border border-slate-700/80 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">

@@ -32,26 +32,48 @@ let MenuService = class MenuService {
             include: { category: true },
             orderBy: { createdAt: "desc" },
         });
-        return { success: true, data };
+        return data;
     }
     async createMenuItem(data) {
         const newItem = await this.prisma.menuItem.create({
-            data,
+            data: {
+                itemCode: data.itemCode,
+                name: data.name,
+                price: Number(data.price) || 0,
+                stock: Number(data.stock) || 0,
+                imageUrl: data.imageUrl || "",
+                categoryId: Number(data.categoryId) || 1,
+            },
         });
-        return { success: true, data: newItem };
+        return newItem;
     }
     async updateMenuItem(id, data) {
-        const existingItem = await this.prisma.menuItem.findUnique({
-            where: { id },
-        });
-        if (!existingItem) {
-            throw new common_1.NotFoundException("Không tìm thấy món ăn này!");
+        try {
+            const updateData = {};
+            if (data.itemCode !== undefined)
+                updateData.itemCode = String(data.itemCode);
+            if (data.name !== undefined)
+                updateData.name = String(data.name);
+            if (data.price !== undefined)
+                updateData.price = Number(data.price);
+            if (data.stock !== undefined)
+                updateData.stock = Number(data.stock);
+            if (data.imageUrl !== undefined)
+                updateData.imageUrl = String(data.imageUrl);
+            if (data.categoryId !== undefined && data.categoryId !== "") {
+                updateData.categoryId = Number(data.categoryId);
+            }
+            console.log("Dữ liệu gửi vào Prisma:", updateData);
+            const updatedItem = await this.prisma.menuItem.update({
+                where: { id },
+                data: updateData,
+            });
+            return updatedItem;
         }
-        const updatedItem = await this.prisma.menuItem.update({
-            where: { id },
-            data,
-        });
-        return { success: true, message: "Cập nhật thành công", data: updatedItem };
+        catch (error) {
+            console.error("🚨 LỖI PRISMA CHI TIẾT:", JSON.stringify(error, null, 2));
+            throw error;
+        }
     }
     async create(createMenuDto) {
         try {

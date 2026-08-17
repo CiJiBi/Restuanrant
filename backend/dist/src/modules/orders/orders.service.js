@@ -25,20 +25,37 @@ let OrdersService = class OrdersService {
             },
             orderBy: { createdAt: "desc" },
         });
-        return { success: true, data };
+        return data;
     }
     async updateOrderStatus(id, status) {
-        const order = await this.prisma.order.findUnique({ where: { id } });
-        if (!order)
-            throw new common_1.NotFoundException("Không tìm thấy đơn hàng!");
         const updated = await this.prisma.order.update({
             where: { id },
             data: { status },
         });
+        return { success: true, message: "Cập nhật thành công", data: updated };
+    }
+    async createOrder(data) {
+        const orderNum = data.orderNumber || `DH-${Math.floor(Math.random() * 10000)}`;
+        const newOrder = await this.prisma.order.create({
+            data: {
+                orderNumber: orderNum,
+                totalAmount: data.totalAmount || 0,
+                status: data.status || "pending",
+                tableNumber: data.tableNumber || "Mang đi",
+                customer: data.customer || "Khách vãng lai",
+                details: {
+                    create: data.items?.map((item) => ({
+                        menuItemId: item.id,
+                        quantity: item.quantity,
+                        unitPrice: item.price,
+                    })) || [],
+                },
+            },
+        });
         return {
             success: true,
-            message: "Cập nhật trạng thái thành công",
-            data: updated,
+            message: "Tạo đơn hàng thành công!",
+            data: newOrder,
         };
     }
 };

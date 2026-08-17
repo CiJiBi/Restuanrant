@@ -28,8 +28,8 @@ let MenuController = class MenuController {
     createMenuItem(data) {
         return this.menuService.createMenuItem(data);
     }
-    updateMenuItem(id, data) {
-        return this.menuService.updateMenuItem(id, data);
+    updateMenuItem(id, body) {
+        return this.menuService.updateMenuItem(id, body);
     }
     deleteMenuItem(id) {
         return this.menuService.deleteMenuItem(id);

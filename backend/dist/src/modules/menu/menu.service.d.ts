@@ -43,60 +43,50 @@ export declare class MenuService {
         createdAt: Date;
         updatedAt: Date;
     }>;
-    getAllMenu(): Promise<{
-        success: boolean;
-        data: ({
-            category: {
-                name: string;
-                description: string | null;
-                id: number;
-            };
-        } & {
+    getAllMenu(): Promise<({
+        category: {
             name: string;
-            id: string;
-            itemCode: string;
-            price: number;
-            stock: number;
-            status: string;
-            imageUrl: string | null;
-            isDeleted: boolean;
-            categoryId: number;
-            createdAt: Date;
-            updatedAt: Date;
-        })[];
-    }>;
-    createMenuItem(data: any): Promise<{
-        success: boolean;
-        data: {
-            name: string;
-            id: string;
-            itemCode: string;
-            price: number;
-            stock: number;
-            status: string;
-            imageUrl: string | null;
-            isDeleted: boolean;
-            categoryId: number;
-            createdAt: Date;
-            updatedAt: Date;
+            description: string | null;
+            id: number;
         };
+    } & {
+        name: string;
+        id: string;
+        itemCode: string;
+        price: number;
+        stock: number;
+        status: string;
+        imageUrl: string | null;
+        isDeleted: boolean;
+        categoryId: number;
+        createdAt: Date;
+        updatedAt: Date;
+    })[]>;
+    createMenuItem(data: any): Promise<{
+        name: string;
+        id: string;
+        itemCode: string;
+        price: number;
+        stock: number;
+        status: string;
+        imageUrl: string | null;
+        isDeleted: boolean;
+        categoryId: number;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     updateMenuItem(id: string, data: any): Promise<{
-        success: boolean;
-        message: string;
-        data: {
-            name: string;
-            id: string;
-            itemCode: string;
-            price: number;
-            stock: number;
-            status: string;
-            imageUrl: string | null;
-            isDeleted: boolean;
-            categoryId: number;
-            createdAt: Date;
-            updatedAt: Date;
-        };
+        name: string;
+        id: string;
+        itemCode: string;
+        price: number;
+        stock: number;
+        status: string;
+        imageUrl: string | null;
+        isDeleted: boolean;
+        categoryId: number;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
     create(createMenuDto: CreateMenuItemDto): Promise<{
         name: string;

@@ -1,11 +1,6 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  BadRequestException,
-} from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
-import { AuthDto } from "./dto/auth.dto";
+import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 
 @Injectable()
@@ -15,50 +10,59 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(authDto: AuthDto) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: authDto.email },
-    });
-    if (existingUser)
-      throw new BadRequestException("Email này đã được sử dụng!");
+  async login(loginDto: any) {
+    const { email, password } = loginDto;
 
-    const hashedPassword = await bcrypt.hash(authDto.password, 10);
-    const user = await this.prisma.user.create({
+    // 1. Tìm người dùng trong Database
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException("Email hoặc mật khẩu không chính xác!");
+    }
+
+    // 2. Kiểm tra mật khẩu (Giả định bạn dùng bcrypt để mã hóa)
+    // Nếu bạn đang lưu mật khẩu thô (chưa mã hóa), tạm thời dùng: const isPasswordValid = (password === user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException("Email hoặc mật khẩu không chính xác!");
+    }
+
+    // 3. Tạo thẻ từ (JWT Token)
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    return {
+      success: true,
+      message: "Đăng nhập thành công",
       data: {
-        email: authDto.email,
-        password: hashedPassword, // Đổi thành password để khớp với Schema của bạn
-        // fullName: 'Người dùng Cijibi', // Bỏ comment nếu Schema của bạn có trường này
+        access_token: this.jwtService.sign(payload),
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        },
+      },
+    };
+  }
+
+  // Tiện ích: Hàm tạo tài khoản Admin mẫu (để bạn test đăng nhập)
+  async registerMockAdmin() {
+    const hashedPassword = await bcrypt.hash("password123", 10);
+    const user = await this.prisma.user.upsert({
+      where: { email: "admin@cijibi.com" },
+      update: {},
+      create: {
+        email: "admin@cijibi.com",
+        password: hashedPassword,
         role: "ADMIN",
       },
     });
-
-    return this.generateToken(user.id, user.email, user.role);
-  }
-
-  async login(authDto: AuthDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: authDto.email },
-    });
-    if (!user) throw new UnauthorizedException("Tài khoản không tồn tại!");
-
-    // So sánh với trường password trong DB
-    const isPasswordMatch = await bcrypt.compare(
-      authDto.password,
-      user.password,
-    );
-    if (!isPasswordMatch) throw new UnauthorizedException("Sai mật khẩu!");
-
-    return this.generateToken(user.id, user.email, user.role);
-  }
-
-  private generateToken(userId: string, email: string, role: string) {
-    const payload = { sub: userId, email, role };
-    return {
-      success: true,
-      data: {
-        access_token: this.jwtService.sign(payload),
-        user: { id: userId, email, role },
-      },
-    };
+    return { message: "Tạo tài khoản thành công!", email: user.email };
   }
 }

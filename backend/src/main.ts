@@ -16,7 +16,6 @@ async function bootstrap() {
     credentials: true,
   });
   // Security & Middlewares
-  app.enableCors();
 
   // Validation DTO
   app.useGlobalPipes(

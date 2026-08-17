@@ -5,33 +5,53 @@ import { PrismaService } from "../../prisma/prisma.service";
 export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
-  // Lấy tất cả đơn hàng kèm theo chi tiết món ăn
   async getAllOrders() {
     const data = await this.prisma.order.findMany({
       include: {
         details: {
-          // Sử dụng 'details' đúng với schema của bạn
-          include: { menuItem: true }, // Lấy kèm thông tin món ăn
+          include: { menuItem: true },
         },
       },
       orderBy: { createdAt: "desc" },
     });
-    return { success: true, data };
+    // SỬA Ở ĐÂY: Trả về trực tiếp biến data, không bọc thêm {}
+    return data;
   }
 
-  // Cập nhật trạng thái đơn hàng
   async updateOrderStatus(id: string, status: string) {
-    const order = await this.prisma.order.findUnique({ where: { id } });
-    if (!order) throw new NotFoundException("Không tìm thấy đơn hàng!");
-
     const updated = await this.prisma.order.update({
       where: { id },
       data: { status },
     });
+    return { success: true, message: "Cập nhật thành công", data: updated };
+  }
+  async createOrder(data: any) {
+    const orderNum =
+      data.orderNumber || `DH-${Math.floor(Math.random() * 10000)}`;
+
+    const newOrder = await this.prisma.order.create({
+      data: {
+        orderNumber: orderNum,
+        totalAmount: data.totalAmount || 0,
+        status: data.status || "pending",
+        tableNumber: data.tableNumber || "Mang đi",
+        customer: data.customer || "Khách vãng lai",
+
+        // 👉 ĐOẠN CODE BỔ SUNG: Yêu cầu Prisma lưu kèm danh sách món ăn vào bảng OrderItem
+        details: {
+          create:
+            data.items?.map((item: any) => ({
+              menuItemId: item.id,
+              quantity: item.quantity,
+              unitPrice: item.price,
+            })) || [],
+        },
+      },
+    });
     return {
       success: true,
-      message: "Cập nhật trạng thái thành công",
-      data: updated,
+      message: "Tạo đơn hàng thành công!",
+      data: newOrder,
     };
   }
 }
