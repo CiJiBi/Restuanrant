@@ -129,7 +129,11 @@ export class MenuService {
       throw error;
     }
   }
-
+  async getAllCategories() {
+    return await this.prisma.category.findMany({
+      orderBy: { id: "asc" },
+    });
+  }
   async deleteMenuItem(id: string) {
     const existingItem = await this.prisma.menuItem.findUnique({
       where: { id },
@@ -142,5 +146,24 @@ export class MenuService {
       where: { id },
     });
     return { success: true, message: "Đã xóa món ăn thành công" };
+  }
+  // Thêm hàm tạo Danh mục mới
+  async createCategory(name: string) {
+    if (!name || name.trim() === "") {
+      throw new BadRequestException("Tên danh mục không được để trống!");
+    }
+
+    // Kiểm tra trùng lặp
+    const existing = await this.prisma.category.findUnique({
+      where: { name: name.trim() },
+    });
+
+    if (existing) {
+      throw new BadRequestException("Danh mục này đã tồn tại!");
+    }
+
+    return await this.prisma.category.create({
+      data: { name: name.trim() },
+    });
   }
 }

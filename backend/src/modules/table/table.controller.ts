@@ -45,4 +45,19 @@ export class TableController {
   async delete(@Param("id") id: string) {
     return await this.tableService.deleteTable(Number(id));
   }
+  @Patch(":id")
+  @UseGuards(JwtAuthGuard)
+  async update(
+    @Param("id") id: string,
+    @Body() body: { name: string; capacity: number },
+  ) {
+    return await this.tableService.updateTable(Number(id), body);
+  }
+  // Thêm route này vào trong class TableController
+  @Post(":id/order")
+  @UseGuards(JwtAuthGuard)
+  async saveOrder(@Param("id") id: string, @Body() body: { items: any[] }) {
+    // Gọi sang service để lưu vào database
+    return await this.tableService.saveOrder(Number(id), body.items);
+  }
 }

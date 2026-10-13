@@ -26,6 +26,7 @@ export declare class MenuRepository implements IGenericRepository<any> {
         isDeleted: boolean;
         imageUrl: string | null;
         categoryId: number;
+        printerGroup: string;
     })[]>;
     findById(id: string): Promise<{
         category: {
@@ -46,6 +47,7 @@ export declare class MenuRepository implements IGenericRepository<any> {
         isDeleted: boolean;
         imageUrl: string | null;
         categoryId: number;
+        printerGroup: string;
     }>;
     create(data: any): Promise<{
         name: string;
@@ -59,6 +61,7 @@ export declare class MenuRepository implements IGenericRepository<any> {
         isDeleted: boolean;
         imageUrl: string | null;
         categoryId: number;
+        printerGroup: string;
     }>;
     update(id: string, data: any): Promise<{
         name: string;
@@ -72,6 +75,7 @@ export declare class MenuRepository implements IGenericRepository<any> {
         isDeleted: boolean;
         imageUrl: string | null;
         categoryId: number;
+        printerGroup: string;
     }>;
     delete(id: string): Promise<boolean>;
     softDelete(id: string): Promise<boolean>;

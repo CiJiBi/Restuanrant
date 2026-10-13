@@ -15,6 +15,11 @@ const orders_module_1 = require("./modules/orders/orders.module");
 const auth_module_1 = require("./modules/auth/auth.module");
 const table_module_1 = require("./modules/table/table.module");
 const prisma_service_1 = require("./prisma/prisma.service");
+const inventory_module_1 = require("./modules/inventory/inventory.module");
+const staff_module_1 = require("./modules/staff/staff.module");
+const attendance_module_1 = require("./modules/attendance/attendance.module");
+const kds_module_1 = require("./modules/kds/kds.module");
+const dashboard_module_1 = require("./modules/dashboard/dashboard.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -25,6 +30,11 @@ exports.AppModule = AppModule = __decorate([
             orders_module_1.OrdersModule,
             auth_module_1.AuthModule,
             table_module_1.TableModule,
+            inventory_module_1.InventoryModule,
+            staff_module_1.StaffModule,
+            attendance_module_1.AttendanceModule,
+            dashboard_module_1.DashboardModule,
+            kds_module_1.KdsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService, prisma_service_1.PrismaService],

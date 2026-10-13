@@ -2,12 +2,11 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   UtensilsCrossed,
   ShoppingBag,
-  Users,
   Grid,
   Settings,
   LogOut,
@@ -15,15 +14,19 @@ import {
   Bell,
   Search,
   TrendingUp,
+  Package,
+  Users,
 } from "lucide-react";
 
 const sidebarLinks = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Thống kê", href: "/admin/analytics", icon: TrendingUp },
   { name: "Thực đơn", href: "/admin/menu", icon: UtensilsCrossed },
   { name: "Đơn hàng", href: "/admin/orders", icon: ShoppingBag },
   { name: "Sơ đồ bàn", href: "/admin/tables", icon: Grid },
   { name: "Khách hàng", href: "/admin/customers", icon: Users },
+  { name: "Nhân viên", href: "/admin/staff", icon: Users },
+  { name: "Quản lý kho", href: "/admin/inventory", icon: Package },
   { name: "Cài đặt", href: "/admin/settings", icon: Settings },
 ];
 
@@ -34,19 +37,27 @@ export default function AdminLayout({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem("cijibi_token");
+    router.push("/login");
+  };
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-slate-50 flex overflow-hidden">
+    <div className="min-h-screen bg-[#0F172A] text-slate-50 flex overflow-hidden w-screen">
       {/* Background Glow */}
       <div className="bg-glow-blue top-[-20%] left-[-10%] opacity-30 fixed pointer-events-none"></div>
 
-      {/* Sidebar */}
+      {/* SIDEBAR CHUẨN DUY NHẤT */}
       <aside
-        className={`fixed md:relative z-50 h-screen transition-all duration-300 ease-in-out ${isSidebarOpen ? "w-64" : "w-0 md:w-20"} bg-slate-900/50 backdrop-blur-xl border-r border-slate-800 flex flex-col`}
+        className={`h-screen transition-all duration-300 ease-in-out shrink-0 ${
+          isSidebarOpen ? "w-64" : "w-20"
+        } bg-slate-900/80 backdrop-blur-xl border-r border-slate-800 flex flex-col z-50`}
       >
         {/* Logo Area */}
-        <div className="h-20 flex items-center justify-center border-b border-slate-800 overflow-hidden">
-          <div className="flex items-center gap-2">
+        <div className="h-20 flex items-center justify-center border-b border-slate-800 px-4 shrink-0 overflow-hidden">
+          <div className="flex items-center gap-3 w-full">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.5)] shrink-0">
               <span className="font-bold text-white text-lg">C</span>
             </div>
@@ -59,7 +70,7 @@ export default function AdminLayout({
         </div>
 
         {/* Navigation Links */}
-        <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2">
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1.5 scrollbar-none">
           {sidebarLinks.map((link) => {
             const Icon = link.icon;
             const isActive = pathname === link.href;
@@ -67,7 +78,7 @@ export default function AdminLayout({
               <Link
                 key={link.name}
                 href={link.href}
-                className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${
+                className={`flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all ${
                   isActive
                     ? "bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(37,99,235,0.1)]"
                     : "text-slate-400 hover:text-white hover:bg-white/5"
@@ -75,27 +86,27 @@ export default function AdminLayout({
               >
                 <Icon size={20} className="shrink-0" />
                 {isSidebarOpen && (
-                  <span className="font-medium whitespace-nowrap">
+                  <span className="font-medium whitespace-nowrap text-sm">
                     {link.name}
                   </span>
                 )}
               </Link>
             );
           })}
-        </nav>
 
-        {/* Logout Button */}
-        <div className="p-4 border-t border-slate-800">
-          <Link
-            href="/login"
-            className="flex items-center gap-3 px-3 py-3 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-400/10 transition-all"
+          {/* Nút Đăng xuất */}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-400/10 transition-all mt-4 border-t border-slate-800/60 pt-4"
           >
             <LogOut size={20} className="shrink-0" />
             {isSidebarOpen && (
-              <span className="font-medium whitespace-nowrap">Đăng xuất</span>
+              <span className="font-medium whitespace-nowrap text-sm">
+                Đăng xuất
+              </span>
             )}
-          </Link>
-        </div>
+          </button>
+        </nav>
       </aside>
 
       {/* Main Content Wrapper */}
@@ -105,9 +116,9 @@ export default function AdminLayout({
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="text-slate-400 hover:text-white transition-colors"
+              className="text-slate-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-slate-800/50"
             >
-              <Menu size={24} />
+              <Menu size={22} />
             </button>
 
             {/* Search Box */}
@@ -134,7 +145,7 @@ export default function AdminLayout({
           </div>
         </header>
 
-        {/* Dynamic Page Content */}
+        {/* Dynamic Page Content (Nơi hiển thị các file page.tsx của từng mục) */}
         <main className="flex-1 overflow-y-auto p-6 scroll-smooth">
           {children}
         </main>

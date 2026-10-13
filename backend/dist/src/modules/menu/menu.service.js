@@ -116,6 +116,11 @@ let MenuService = class MenuService {
             throw error;
         }
     }
+    async getAllCategories() {
+        return await this.prisma.category.findMany({
+            orderBy: { id: "asc" },
+        });
+    }
     async deleteMenuItem(id) {
         const existingItem = await this.prisma.menuItem.findUnique({
             where: { id },
@@ -127,6 +132,20 @@ let MenuService = class MenuService {
             where: { id },
         });
         return { success: true, message: "Đã xóa món ăn thành công" };
+    }
+    async createCategory(name) {
+        if (!name || name.trim() === "") {
+            throw new common_1.BadRequestException("Tên danh mục không được để trống!");
+        }
+        const existing = await this.prisma.category.findUnique({
+            where: { name: name.trim() },
+        });
+        if (existing) {
+            throw new common_1.BadRequestException("Danh mục này đã tồn tại!");
+        }
+        return await this.prisma.category.create({
+            data: { name: name.trim() },
+        });
     }
 };
 exports.MenuService = MenuService;

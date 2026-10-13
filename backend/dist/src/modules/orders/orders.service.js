@@ -16,6 +16,17 @@ let OrdersService = class OrdersService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    async findAll() {
+        return await this.prisma.order.findMany({
+            include: {
+                table: true,
+                orderItems: {
+                    include: { menuItem: true },
+                },
+            },
+            orderBy: { createdAt: "desc" },
+        });
+    }
     async getAllOrders() {
         const data = await this.prisma.order.findMany({
             include: {
@@ -30,11 +41,48 @@ let OrdersService = class OrdersService {
         return data;
     }
     async updateOrderStatus(id, status) {
-        const updated = await this.prisma.order.update({
-            where: { id },
+        const order = await this.prisma.order.findFirst({
+            where: {
+                OR: [{ id: id }, { orderNumber: id }],
+            },
+            include: {
+                orderItems: {
+                    include: {
+                        menuItem: {
+                            include: { recipes: true },
+                        },
+                    },
+                },
+            },
+        });
+        if (!order)
+            throw new common_1.NotFoundException("Không tìm thấy đơn hàng này!");
+        if ((status === "PREPARING" || status === "COOKING") &&
+            order.status === "PENDING") {
+            await this.prisma.$transaction(async (prisma) => {
+                for (const orderItem of order.orderItems) {
+                    const orderQuantity = orderItem.quantity;
+                    if (orderItem.menuItem?.recipes) {
+                        for (const recipe of orderItem.menuItem.recipes) {
+                            const deductAmount = recipe.quantity * orderQuantity;
+                            await prisma.ingredient.update({
+                                where: { id: recipe.ingredientId },
+                                data: { currentStock: { decrement: deductAmount } },
+                            });
+                        }
+                    }
+                }
+                await prisma.order.update({
+                    where: { id: order.id },
+                    data: { status },
+                });
+            });
+            return { message: "Đã nhận làm món và trừ kho thành công!" };
+        }
+        return await this.prisma.order.update({
+            where: { id: order.id },
             data: { status },
         });
-        return { success: true, message: "Cập nhật thành công", data: updated };
     }
     async createOrder(data) {
         const orderNum = data.orderNumber || `DH-${Math.floor(1000 + Math.random() * 9000)}`;

@@ -10,7 +10,10 @@ export declare class OrdersController {
             id: string;
             email: string;
             password: string;
+            pinCode: string | null;
             role: string;
+            salary: number;
+            isActive: boolean;
         };
         table: {
             name: string;
@@ -23,6 +26,7 @@ export declare class OrdersController {
             capacity: number;
             guestName: string | null;
             timeSeated: string | null;
+            cart: string | null;
         };
         orderItems: ({
             menuItem: {
@@ -37,6 +41,7 @@ export declare class OrdersController {
                 isDeleted: boolean;
                 imageUrl: string | null;
                 categoryId: number;
+                printerGroup: string;
             };
         } & {
             createdAt: Date;
@@ -54,26 +59,28 @@ export declare class OrdersController {
         status: string;
         orderNumber: string;
         paymentStatus: string;
+        customerName: string | null;
+        customerPhone: string | null;
         totalAmount: import("@prisma/client/runtime/library").Decimal;
         tableId: number | null;
         userId: string | null;
         note: string | null;
     })[]>;
     updateStatus(id: string, status: string): Promise<{
-        success: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        id: string;
+        status: string;
+        orderNumber: string;
+        paymentStatus: string;
+        customerName: string | null;
+        customerPhone: string | null;
+        totalAmount: import("@prisma/client/runtime/library").Decimal;
+        tableId: number | null;
+        userId: string | null;
+        note: string | null;
+    } | {
         message: string;
-        data: {
-            createdAt: Date;
-            updatedAt: Date;
-            id: string;
-            status: string;
-            orderNumber: string;
-            paymentStatus: string;
-            totalAmount: import("@prisma/client/runtime/library").Decimal;
-            tableId: number | null;
-            userId: string | null;
-            note: string | null;
-        };
     }>;
     createOrder(body: any): Promise<{
         success: boolean;
@@ -92,6 +99,7 @@ export declare class OrdersController {
                     isDeleted: boolean;
                     imageUrl: string | null;
                     categoryId: number;
+                    printerGroup: string;
                 };
             } & {
                 createdAt: Date;
@@ -109,6 +117,8 @@ export declare class OrdersController {
             status: string;
             orderNumber: string;
             paymentStatus: string;
+            customerName: string | null;
+            customerPhone: string | null;
             totalAmount: import("@prisma/client/runtime/library").Decimal;
             tableId: number | null;
             userId: string | null;

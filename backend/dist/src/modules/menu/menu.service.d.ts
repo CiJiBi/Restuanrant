@@ -7,72 +7,88 @@ export declare class MenuService {
     getNextItemCode(): Promise<string>;
     getAllMenu(): Promise<({
         category: {
-            id: number;
             name: string;
             createdAt: Date;
             updatedAt: Date;
+            id: number;
         };
     } & {
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
         id: string;
         itemCode: string;
-        name: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;
         status: string;
         isDeleted: boolean;
         imageUrl: string | null;
         categoryId: number;
-        createdAt: Date;
-        updatedAt: Date;
+        printerGroup: string;
     })[]>;
     findOne(id: string): Promise<{
         category: {
-            id: number;
             name: string;
             createdAt: Date;
             updatedAt: Date;
+            id: number;
         };
     } & {
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
         id: string;
         itemCode: string;
-        name: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;
         status: string;
         isDeleted: boolean;
         imageUrl: string | null;
         categoryId: number;
-        createdAt: Date;
-        updatedAt: Date;
+        printerGroup: string;
     }>;
     createMenuItem(data: any): Promise<{
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
         id: string;
         itemCode: string;
-        name: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;
         status: string;
         isDeleted: boolean;
         imageUrl: string | null;
         categoryId: number;
-        createdAt: Date;
-        updatedAt: Date;
+        printerGroup: string;
     }>;
     updateMenuItem(id: string, data: any): Promise<{
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
         id: string;
         itemCode: string;
-        name: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;
         status: string;
         isDeleted: boolean;
         imageUrl: string | null;
         categoryId: number;
+        printerGroup: string;
+    }>;
+    getAllCategories(): Promise<{
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-    }>;
+        id: number;
+    }[]>;
     deleteMenuItem(id: string): Promise<{
         success: boolean;
         message: string;
+    }>;
+    createCategory(name: string): Promise<{
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        id: number;
     }>;
 }

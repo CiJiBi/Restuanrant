@@ -13,18 +13,21 @@ import {
   CheckCircle,
   AlertCircle,
   AlertTriangle,
+  FolderPlus,
   CheckCircle2,
   Coffee,
 } from "lucide-react";
 
+// 👇 BỔ SUNG categoryId VÀO INTERFACE ĐỂ LÚC SỬA MÓN LẤY ĐƯỢC ID
 interface MenuItem {
   id: string;
   itemCode: string;
   name: string;
-  price: number;
+  price: number | string;
   isAvailable: boolean;
   imageUrl?: string;
-  category?: { name: string };
+  categoryId?: number;
+  category?: { id: number; name: string };
 }
 
 interface ToastMessage {
@@ -35,16 +38,22 @@ interface ToastMessage {
 export default function MenuManagementPage() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>(
+    [],
+  );
 
   // State quản lý Modal thêm/sửa món
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-
-  // State quản lý Popup xác nhận xóa (Thay thế window.confirm)
+  // 👇 STATE QUẢN LÝ MODAL THÊM DANH MỤC
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [isSubmittingCategory, setIsSubmittingCategory] = useState(false);
+  // State quản lý Popup xác nhận xóa
   const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null);
 
-  // State quản lý Toast thông báo hiện đại
+  // State quản lý Toast thông báo
   const [toast, setToast] = useState<ToastMessage | null>(null);
 
   const showToast = (
@@ -57,17 +66,19 @@ export default function MenuManagementPage() {
     }, 3000);
   };
 
+  // 👇 FIX LỖI 1117: Đã xóa categoryId bị trùng, ép chuẩn về string
   const [newItem, setNewItem] = useState({
     itemCode: "",
     name: "",
     price: "" as string | number,
     isAvailable: true,
-    categoryId: 1,
+    categoryId: "",
     imageUrl: "",
   });
 
   useEffect(() => {
     fetchMenu();
+    fetchCategories();
   }, []);
 
   const fetchMenu = async () => {
@@ -93,14 +104,22 @@ export default function MenuManagementPage() {
     }
   };
 
-  // Hàm mở modal thêm món và tự động lấy mã SP tiếp theo từ Backend
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get("/menu/categories");
+      setCategories(res.data?.data || res.data || []);
+    } catch (error) {
+      console.log("Lỗi lấy danh mục");
+    }
+  };
+
+  // Mở modal thêm món
   const handleOpenAddModal = async () => {
     setEditingId(null);
     try {
       const response = await api.get("/menu/next-code");
       const resData = response.data;
 
-      // Bóc tách linh hoạt dữ liệu từ object bọc chuẩn chung của Backend
       const code =
         typeof resData === "string"
           ? resData
@@ -108,14 +127,13 @@ export default function MenuManagementPage() {
             ? resData.data
             : resData?.code || "SP01";
 
-      console.log("Mã mới nhận được:", code);
-
+      // 👇 FIX LỖI 2322: Chuyển categoryId thành chuỗi rỗng "" thay vì số 1
       setNewItem({
         itemCode: code,
         name: "",
         price: "",
         isAvailable: true,
-        categoryId: 1,
+        categoryId: "",
         imageUrl: "",
       });
     } catch (error) {
@@ -124,20 +142,23 @@ export default function MenuManagementPage() {
         name: "",
         price: "",
         isAvailable: true,
-        categoryId: 1,
+        categoryId: "",
         imageUrl: "",
       });
     }
     setIsModalOpen(true);
   };
+
+  // Mở modal sửa món
   const handleOpenEdit = (item: MenuItem) => {
     setEditingId(item.id);
+    // 👇 FIX LỖI 2322: Gán categoryId của món vào form dạng chuỗi
     setNewItem({
       itemCode: item.itemCode,
       name: item.name,
       price: item.price,
       isAvailable: item.isAvailable,
-      categoryId: 1,
+      categoryId: item.categoryId ? String(item.categoryId) : "",
       imageUrl: item.imageUrl || "",
     });
     setIsModalOpen(true);
@@ -146,12 +167,13 @@ export default function MenuManagementPage() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingId(null);
+    // 👇 FIX LỖI 2322: Đưa về chuỗi rỗng ""
     setNewItem({
       itemCode: "",
       name: "",
       price: "",
       isAvailable: true,
-      categoryId: 1,
+      categoryId: "",
       imageUrl: "",
     });
   };
@@ -173,11 +195,9 @@ export default function MenuManagementPage() {
         name: String(newItem.name),
         price: numericPrice,
         isAvailable: Boolean(newItem.isAvailable),
-        categoryId: Number(newItem.categoryId) || 1,
+        categoryId: Number(newItem.categoryId) || 1, // Chuyển ngược lại thành Số khi gửi lên Backend
         imageUrl: String(newItem.imageUrl || ""),
       };
-
-      console.log("📦 Payload gửi lên Backend:", payload);
 
       if (editingId) {
         await api.patch(`/menu/${editingId}`, payload);
@@ -190,9 +210,6 @@ export default function MenuManagementPage() {
       fetchMenu();
       handleCloseModal();
     } catch (error: any) {
-      console.error("🔥 CHI TIẾT LỖI 400 TỪ BACKEND:", error.response?.data);
-
-      // Hiển thị thông báo lỗi cụ thể từ backend nếu có (ví dụ: mảng message validation)
       const errorMsg = error.response?.data?.message;
       const displayMessage = Array.isArray(errorMsg)
         ? errorMsg.join(", ")
@@ -201,6 +218,25 @@ export default function MenuManagementPage() {
       showToast(displayMessage, "error");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+  // 👇 HÀM XỬ LÝ LƯU DANH MỤC MỚI
+  const handleCreateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingCategory(true);
+    try {
+      await api.post("/menu/categories", { name: newCategoryName });
+      showToast(`Đã thêm danh mục "${newCategoryName}" thành công!`);
+      setNewCategoryName("");
+      setIsCategoryModalOpen(false);
+      fetchCategories(); // Reload lại danh sách danh mục để dropdown cập nhật
+    } catch (error: any) {
+      showToast(
+        error.response?.data?.message || "Lỗi khi tạo danh mục!",
+        "error",
+      );
+    } finally {
+      setIsSubmittingCategory(false);
     }
   };
   // Thực thi xóa món sau khi bấm xác nhận trên Popup
@@ -223,8 +259,8 @@ export default function MenuManagementPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 text-slate-300 relative">
-      {/* Toast Notification Container (Góc trên bên phải) */}
-      <div className="fixed top-6 right-6 z-50 pointer-events-none">
+      {/* Toast Notification Container */}
+      <div className="fixed top-6 right-6 z-[9999] pointer-events-none">
         <AnimatePresence>
           {toast && (
             <motion.div
@@ -260,12 +296,20 @@ export default function MenuManagementPage() {
             Quản lý danh sách món ăn, giá cả và trạng thái phục vụ.
           </p>
         </div>
-        <button
-          onClick={handleOpenAddModal}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl transition-colors shadow-lg shadow-blue-500/20"
-        >
-          <Plus size={18} /> Thêm món mới
-        </button>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <button
+            onClick={() => setIsCategoryModalOpen(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium rounded-xl transition-colors border border-slate-700"
+          >
+            <FolderPlus size={18} /> Danh mục
+          </button>
+          <button
+            onClick={handleOpenAddModal}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl transition-colors shadow-lg shadow-blue-500/20"
+          >
+            <Plus size={18} /> Thêm món
+          </button>
+        </div>
       </div>
 
       {/* Thanh Tìm kiếm & Lọc */}
@@ -353,8 +397,8 @@ export default function MenuManagementPage() {
                         {item.category?.name || "Món chính"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 font-semibold text-emerald-400">
-                      {item.price.toLocaleString("vi-VN")} đ
+                    <td className="px-6 py-4 font-black text-emerald-400 text-base">
+                      {Number(item.price).toLocaleString("vi-VN")} đ
                     </td>
                     <td className="px-6 py-4">
                       {item.isAvailable ? (
@@ -392,7 +436,62 @@ export default function MenuManagementPage() {
           </table>
         </div>
       </div>
-
+      <AnimatePresence>
+        {isCategoryModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#111827] border border-slate-700/80 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden"
+            >
+              <div className="flex justify-between items-center p-5 border-b border-slate-800">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <FolderPlus size={20} className="text-blue-400" /> Thêm Danh
+                  Mục
+                </h3>
+                <button
+                  onClick={() => setIsCategoryModalOpen(false)}
+                  className="text-slate-500 hover:text-slate-300 transition-colors p-1.5 rounded-full hover:bg-slate-800"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <form onSubmit={handleCreateCategory} className="p-5 space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-2 uppercase">
+                    Tên Danh Mục Mới
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="VD: Nước uống, Tráng miệng..."
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none transition-all"
+                  />
+                </div>
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsCategoryModalOpen(false)}
+                    className="px-4 py-2.5 rounded-xl font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingCategory}
+                    className="px-5 py-2.5 rounded-xl font-medium bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50 transition-colors shadow-lg"
+                  >
+                    {isSubmittingCategory ? "Đang xử lý..." : "Lưu danh mục"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       {/* Popup Modal Thêm/Sửa Món Ăn */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
@@ -428,29 +527,54 @@ export default function MenuManagementPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase">
+                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">
                     Tên món ăn
                   </label>
+
                   <input
-                    required
                     type="text"
-                    placeholder="VD: Phở bò đặc biệt"
+                    required
                     value={newItem.name}
                     onChange={(e) =>
                       setNewItem({ ...newItem, name: e.target.value })
                     }
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:border-blue-500 focus:outline-none transition-all"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase">
+                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">
+                    Danh mục
+                  </label>
+                  {/* 👇 FIX LỖI 2304: Đã đổi form thành newItem */}
+                  <select
+                    value={newItem.categoryId}
+                    onChange={(e) =>
+                      setNewItem({ ...newItem, categoryId: e.target.value })
+                    }
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none appearance-none"
+                  >
+                    <option value="" disabled>
+                      -- Chọn danh mục --
+                    </option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                    {categories.length === 0 && (
+                      <option value="1">Món chính</option>
+                    )}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">
                     Giá bán (VNĐ)
                   </label>
                   <input
                     required
                     type="number"
                     min="1"
-                    placeholder="VD: 50000"
+                    placeholder="VD: 50.000"
                     value={newItem.price}
                     onChange={(e) =>
                       setNewItem({ ...newItem, price: e.target.value })
@@ -458,38 +582,40 @@ export default function MenuManagementPage() {
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:border-blue-500 focus:outline-none transition-all"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase">
-                    Trạng thái phục vụ
-                  </label>
-                  <select
-                    value={newItem.isAvailable ? "true" : "false"}
-                    onChange={(e) =>
-                      setNewItem({
-                        ...newItem,
-                        isAvailable: e.target.value === "true",
-                      })
-                    }
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none transition-all"
-                  >
-                    <option value="true">🟢 Đang bán (Còn món)</option>
-                    <option value="false">🔴 Tạm hết (Hết món)</option>
-                  </select>
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-xs font-medium text-slate-400 mb-1.5 uppercase">
-                    Đường dẫn Ảnh minh họa
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="https://..."
-                    value={newItem.imageUrl}
-                    onChange={(e) =>
-                      setNewItem({ ...newItem, imageUrl: e.target.value })
-                    }
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:border-blue-500 focus:outline-none transition-all"
-                  />
-                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">
+                  Trạng thái phục vụ
+                </label>
+                <select
+                  value={newItem.isAvailable ? "true" : "false"}
+                  onChange={(e) =>
+                    setNewItem({
+                      ...newItem,
+                      isAvailable: e.target.value === "true",
+                    })
+                  }
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none transition-all"
+                >
+                  <option value="true">🟢 Đang bán (Còn món)</option>
+                  <option value="false">🔴 Tạm hết (Hết món)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1 uppercase">
+                  Đường dẫn Ảnh minh họa
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://..."
+                  value={newItem.imageUrl}
+                  onChange={(e) =>
+                    setNewItem({ ...newItem, imageUrl: e.target.value })
+                  }
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:border-blue-500 focus:outline-none transition-all"
+                />
               </div>
 
               <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-slate-800">
@@ -517,7 +643,7 @@ export default function MenuManagementPage() {
         </div>
       )}
 
-      {/* Custom Confirm Modal Xóa Món (Thay thế hoàn toàn window.confirm) */}
+      {/* Custom Confirm Modal Xóa Món */}
       {itemToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <motion.div
