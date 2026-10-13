@@ -17,7 +17,7 @@ import {
   ChefHat,
 } from "lucide-react";
 import { io } from "socket.io-client";
-const socket = io("http://localhost:4000"); // Kết nối tới kênh thời gian thực
+const socket = io("http://localhost:4000", { autoConnect: false }); // Kênh thời gian thực cần JWT
 // 👇 1. CẬP NHẬT INTERFACE: Bổ sung cấu trúc chứa danh sách món ăn
 interface OrderItem {
   quantity: number;
@@ -58,6 +58,8 @@ export default function OrdersPage() {
     { id: "CANCELLED", label: "Đã hủy", icon: <XCircle size={16} /> },
   ];
   useEffect(() => {
+    socket.auth = { token: localStorage.getItem("cijibi_token") };
+    socket.connect();
     fetchOrders();
 
     // Lắng nghe tín hiệu từ Bếp (KDS) và Thu ngân (POS)
@@ -69,6 +71,7 @@ export default function OrdersPage() {
     return () => {
       socket.off("receiveNewOrder", handleRefresh);
       socket.off("orderStatusUpdated", handleRefresh);
+      socket.disconnect();
     };
   }, []);
   const fetchOrders = async () => {

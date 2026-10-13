@@ -13,7 +13,23 @@ export class AuthService {
     if (!user || !user.isActive) {
       throw new UnauthorizedException("Email hoặc mật khẩu không chính xác!");
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    let isPasswordValid = false;
+    try {
+      isPasswordValid = await bcrypt.compare(password, user.password);
+    } catch {
+      // Legacy records may contain plaintext passwords from earlier versions.
+    }
+
+    // One-time migration for legacy plaintext records: hash immediately on successful login.
+    if (!isPasswordValid && user.password === password) {
+      const hashedPassword = await bcrypt.hash(password, 12);
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+      });
+      isPasswordValid = true;
+    }
+
     if (!isPasswordValid) {
       throw new UnauthorizedException("Email hoặc mật khẩu không chính xác!");
     }

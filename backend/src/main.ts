@@ -11,7 +11,7 @@ async function bootstrap() {
 
   // MỞ CỔNG CORS TẠI ĐÂY
   app.enableCors({
-    origin: "http://localhost:3000", // Cho phép Frontend (cổng 3000) truy cập
+    origin: (process.env.CORS_ORIGIN || "http://localhost:3000").split(",").map((value) => value.trim()),
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
   });

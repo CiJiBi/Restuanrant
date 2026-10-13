@@ -1,0 +1,36 @@
+name: Backend security build
+
+on:
+  push:
+    branches:
+      - "security/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-security-build.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: "sqlserver://localhost:1433;database=restaurant;user=sa;password=Strong_password123;encrypt=true;trustServerCertificate=true"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Install backend dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: npx prisma generate --schema=prisma/schema.prisma
+      - name: Compile backend
+        run: npm run build
