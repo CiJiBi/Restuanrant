@@ -7,7 +7,10 @@ import { Roles } from "../../core/guards/roles.decorator";
 @Controller("tables")
 export class TableController {
   constructor(private readonly tableService: TableService) {}
-  @Get() findAll() { return this.tableService.findAll(); }
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("ADMIN", "CASHIER", "WAITER")
+  findAll() { return this.tableService.findAll(); }
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard) @Roles("ADMIN", "CASHIER", "WAITER")
   create(@Body() body: { name: string; capacity: number }) { return this.tableService.createTable(body); }

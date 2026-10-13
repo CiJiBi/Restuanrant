@@ -21,7 +21,8 @@ export class AuthService {
     }
 
     // One-time migration for legacy plaintext records: hash immediately on successful login.
-    if (!isPasswordValid && user.password === password) {
+    const looksLikeBcryptHash = /^\$2[aby]\$\d{2}\$/.test(user.password);
+    if (!isPasswordValid && !looksLikeBcryptHash && user.password === password) {
       const hashedPassword = await bcrypt.hash(password, 12);
       await this.prisma.user.update({
         where: { id: user.id },
