@@ -11,6 +11,9 @@ on:
       - "backend/**"
       - ".github/workflows/backend-security-build.yml"
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,3 +37,14 @@ jobs:
         run: npx prisma generate --schema=prisma/schema.prisma
       - name: Compile backend
         run: npm run build
+
+      - name: Refresh tracked production build output on security branches
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/security/')
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dist
+          if ! git diff --cached --quiet; then
+            git commit -m "build: refresh backend dist for security patch"
+            git push
+          fi
