@@ -1,33 +1,32 @@
-name: Backend security build
+name: Project validation
 
 on:
   push:
     branches:
+      - main
       - "security/**"
   pull_request:
     branches:
       - main
     paths:
-      - "backend/**"
-      - ".github/workflows/backend-security-build.yml"
-
-permissions:
-  contents: write
+      - "**"
 
 concurrency:
-  group: backend-security-${{ github.ref }}
+  group: project-validation-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  backend-build:
+    name: Backend install, Prisma generation, and compile
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
     env:
       DATABASE_URL: "sqlserver://localhost:1433;database=restaurant;user=sa;password=Strong_password123;encrypt=true;trustServerCertificate=true"
+      JWT_SECRET: "ci-only-secret-with-at-least-32-characters"
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -42,13 +41,22 @@ jobs:
       - name: Compile backend
         run: npm run build
 
-      - name: Refresh tracked production build output on security branches
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/security/')
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f dist
-          if ! git diff --cached --quiet; then
-            git commit -m "build: refresh backend dist for security patch"
-            git push origin HEAD:${GITHUB_REF_NAME}
-          fi
+  frontend-build:
+    name: Frontend install and production build
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "ci-placeholder-anon-key"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Build frontend
+        run: npm run build
