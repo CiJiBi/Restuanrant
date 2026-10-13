@@ -1,89 +1,51 @@
-import { Injectable, BadRequestException } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
+import * as bcrypt from "bcrypt";
 import { PrismaService } from "../../prisma/prisma.service";
+
+const safeUserSelect = { id: true, name: true, email: true, role: true, salary: true, isActive: true, createdAt: true, pinCode: true };
 
 @Injectable()
 export class StaffService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  // 1. LẤY DANH SÁCH (Bổ sung lấy trường pinCode)
   async getAllStaff() {
-    return await this.prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        salary: true,
-        isActive: true,
-        createdAt: true,
-        pinCode: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    return this.prisma.user.findMany({ select: safeUserSelect, orderBy: { createdAt: "desc" } });
   }
 
-  // 2. TẠO MỚI (Bổ sung kiểm tra trùng mã PIN)
   async createStaff(data: any) {
-    const existing = await this.prisma.user.findUnique({
-      where: { email: data.email },
-    });
-    if (existing) throw new BadRequestException("Email này đã được sử dụng!");
-
-    if (data.pinCode) {
-      const pinExists = await this.prisma.user.findFirst({
-        where: { pinCode: data.pinCode },
-      });
-      if (pinExists)
-        throw new BadRequestException(
-          "Mã PIN này đã có người sử dụng, vui lòng chọn mã khác!",
-        );
+    if (typeof data.password !== "string" || data.password.length < 8) {
+      throw new BadRequestException("Mật khẩu phải có ít nhất 8 ký tự.");
     }
-
-    return await this.prisma.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        role: data.role,
-        salary: Number(data.salary) || 0,
-        pinCode: data.pinCode || null, // Lưu mã PIN
-      },
+    const existing = await this.prisma.user.findUnique({ where: { email: data.email } });
+    if (existing) throw new BadRequestException("Email này đã được sử dụng!");
+    if (data.pinCode) {
+      const pinExists = await this.prisma.user.findFirst({ where: { pinCode: data.pinCode } });
+      if (pinExists) throw new BadRequestException("Mã PIN này đã có người sử dụng, vui lòng chọn mã khác!");
+    }
+    const hashedPassword = await bcrypt.hash(data.password, 12);
+    return this.prisma.user.create({
+      data: { name: data.name, email: data.email, password: hashedPassword, role: data.role, salary: Number(data.salary) || 0, pinCode: data.pinCode || null },
+      select: safeUserSelect,
     });
   }
 
-  // 3. CẬP NHẬT (Bổ sung kiểm tra trùng mã PIN cho người khác)
   async updateStaff(id: string, data: any) {
     if (data.pinCode) {
-      // Kiểm tra xem mã PIN mới có bị trùng với ai đó (không phải chính mình) không
-      const pinExists = await this.prisma.user.findFirst({
-        where: { pinCode: data.pinCode, id: { not: id } },
-      });
-      if (pinExists)
-        throw new BadRequestException(
-          "Mã PIN này đã có người sử dụng, vui lòng chọn mã khác!",
-        );
+      const pinExists = await this.prisma.user.findFirst({ where: { pinCode: data.pinCode, id: { not: id } } });
+      if (pinExists) throw new BadRequestException("Mã PIN này đã có người sử dụng, vui lòng chọn mã khác!");
     }
-
     const updateData: any = {
-      name: data.name,
-      email: data.email,
-      role: data.role,
-      salary: Number(data.salary) || 0,
-      isActive: data.isActive,
-      pinCode: data.pinCode || null, // Cập nhật mã PIN
+      name: data.name, email: data.email, role: data.role,
+      salary: Number(data.salary) || 0, isActive: data.isActive, pinCode: data.pinCode || null,
     };
-
-    if (data.password && data.password.trim() !== "") {
-      updateData.password = data.password;
+    if (typeof data.password === "string" && data.password.trim() !== "") {
+      if (data.password.length < 8) throw new BadRequestException("Mật khẩu phải có ít nhất 8 ký tự.");
+      updateData.password = await bcrypt.hash(data.password, 12);
     }
-
-    return await this.prisma.user.update({
-      where: { id },
-      data: updateData,
-    });
+    return this.prisma.user.update({ where: { id }, data: updateData, select: safeUserSelect });
   }
 
   async deleteStaff(id: string) {
-    return await this.prisma.user.delete({ where: { id } });
+    return this.prisma.user.delete({ where: { id }, select: { id: true, name: true, email: true, role: true } });
   }
 }

@@ -1,14 +1,14 @@
 import { Controller, Get, UseGuards } from "@nestjs/common";
 import { DashboardService } from "./dashboard.service";
-import { JwtAuthGuard } from "../auth/jwt-auth.guard"; // Nhớ check lại đường dẫn Guard
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { RolesGuard } from "../../core/guards/roles.guard";
+import { Roles } from "../../core/guards/roles.decorator";
 
 @Controller("dashboard")
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
-
   @Get("overview")
-  // @UseGuards(JwtAuthGuard) // Bật lên khi bạn đã sẵn sàng bảo mật
-  async getOverview() {
-    return await this.dashboardService.getOverviewData();
-  }
+  @Roles("ADMIN", "CASHIER")
+  getOverview() { return this.dashboardService.getOverviewData(); }
 }
