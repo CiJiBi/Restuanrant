@@ -54,54 +54,42 @@ let AuthService = class AuthService {
     }
     async login(loginDto) {
         const { email, password } = loginDto;
-        const user = await this.prisma.user.findUnique({
-            where: { email },
-        });
-        if (!user) {
+        const user = await this.prisma.user.findUnique({ where: { email } });
+        if (!user || !user.isActive) {
             throw new common_1.UnauthorizedException("Email hoặc mật khẩu không chính xác!");
         }
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        let isPasswordValid = false;
+        try {
+            isPasswordValid = await bcrypt.compare(password, user.password);
+        }
+        catch {
+        }
+        const looksLikeBcryptHash = /^\$2[aby]\$\d{2}\$/.test(user.password);
+        if (!isPasswordValid && !looksLikeBcryptHash && user.password === password) {
+            const hashedPassword = await bcrypt.hash(password, 12);
+            await this.prisma.user.update({
+                where: { id: user.id },
+                data: { password: hashedPassword },
+            });
+            isPasswordValid = true;
+        }
         if (!isPasswordValid) {
             throw new common_1.UnauthorizedException("Email hoặc mật khẩu không chính xác!");
         }
-        const payload = {
-            sub: user.id,
-            email: user.email,
-            role: user.role,
-        };
+        const payload = { sub: user.id, email: user.email, role: user.role };
         return {
             success: true,
             message: "Đăng nhập thành công",
             data: {
                 access_token: this.jwtService.sign(payload),
-                user: {
-                    id: user.id,
-                    name: user.name || "Quản trị viên",
-                    email: user.email,
-                    role: user.role,
-                },
+                user: { id: user.id, name: user.name || "Nhân viên", email: user.email, role: user.role },
             },
         };
-    }
-    async registerMockAdmin() {
-        const hashedPassword = await bcrypt.hash("password123", 10);
-        const user = await this.prisma.user.upsert({
-            where: { email: "admin@cijibi.com" },
-            update: {},
-            create: {
-                email: "admin@cijibi.com",
-                name: "Admin Quản Trị",
-                password: hashedPassword,
-                role: "ADMIN",
-            },
-        });
-        return { message: "Tạo tài khoản thành công!", email: user.email };
     }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        jwt_1.JwtService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService, jwt_1.JwtService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

@@ -22,12 +22,6 @@ let AuthController = class AuthController {
     login(loginDto) {
         return this.authService.login(loginDto);
     }
-    registerAdmin() {
-        return this.authService.registerMockAdmin();
-    }
-    setupAdmin() {
-        return this.authService.registerMockAdmin();
-    }
 };
 exports.AuthController = AuthController;
 __decorate([
@@ -37,18 +31,6 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "login", null);
-__decorate([
-    (0, common_1.Post)("register-admin"),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], AuthController.prototype, "registerAdmin", null);
-__decorate([
-    (0, common_1.Get)("setup-admin"),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], AuthController.prototype, "setupAdmin", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)("auth"),
     __metadata("design:paramtypes", [auth_service_1.AuthService])

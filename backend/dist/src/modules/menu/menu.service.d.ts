@@ -7,16 +7,16 @@ export declare class MenuService {
     getNextItemCode(): Promise<string>;
     getAllMenu(): Promise<({
         category: {
+            id: number;
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            id: number;
         };
     } & {
+        id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: string;
         itemCode: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;
@@ -28,16 +28,16 @@ export declare class MenuService {
     })[]>;
     findOne(id: string): Promise<{
         category: {
+            id: number;
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            id: number;
         };
     } & {
+        id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: string;
         itemCode: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;
@@ -48,10 +48,10 @@ export declare class MenuService {
         printerGroup: string;
     }>;
     createMenuItem(data: any): Promise<{
+        id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: string;
         itemCode: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;
@@ -62,10 +62,10 @@ export declare class MenuService {
         printerGroup: string;
     }>;
     updateMenuItem(id: string, data: any): Promise<{
+        id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: string;
         itemCode: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;
@@ -76,19 +76,19 @@ export declare class MenuService {
         printerGroup: string;
     }>;
     getAllCategories(): Promise<{
+        id: number;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: number;
     }[]>;
     deleteMenuItem(id: string): Promise<{
         success: boolean;
         message: string;
     }>;
     createCategory(name: string): Promise<{
+        id: number;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: number;
     }>;
 }

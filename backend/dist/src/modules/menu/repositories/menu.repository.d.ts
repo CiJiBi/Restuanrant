@@ -9,16 +9,16 @@ export declare class MenuRepository implements IGenericRepository<any> {
         take?: number;
     }): Promise<({
         category: {
+            id: number;
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            id: number;
         };
     } & {
+        id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: string;
         itemCode: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;
@@ -30,16 +30,16 @@ export declare class MenuRepository implements IGenericRepository<any> {
     })[]>;
     findById(id: string): Promise<{
         category: {
+            id: number;
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            id: number;
         };
     } & {
+        id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: string;
         itemCode: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;
@@ -50,10 +50,10 @@ export declare class MenuRepository implements IGenericRepository<any> {
         printerGroup: string;
     }>;
     create(data: any): Promise<{
+        id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: string;
         itemCode: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;
@@ -64,10 +64,10 @@ export declare class MenuRepository implements IGenericRepository<any> {
         printerGroup: string;
     }>;
     update(id: string, data: any): Promise<{
+        id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: string;
         itemCode: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;

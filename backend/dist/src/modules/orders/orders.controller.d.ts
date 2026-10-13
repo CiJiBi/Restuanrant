@@ -4,22 +4,16 @@ export declare class OrdersController {
     constructor(ordersService: OrdersService);
     getAllOrders(): Promise<({
         user: {
-            name: string;
-            createdAt: Date;
-            updatedAt: Date;
             id: string;
             email: string;
-            password: string;
-            pinCode: string | null;
+            name: string;
             role: string;
-            salary: number;
-            isActive: boolean;
         };
         table: {
+            id: number;
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            id: number;
             status: string;
             totalAmount: string | null;
             orderId: string | null;
@@ -30,10 +24,10 @@ export declare class OrdersController {
         };
         orderItems: ({
             menuItem: {
+                id: string;
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                id: string;
                 itemCode: string;
                 price: import("@prisma/client/runtime/library").Decimal;
                 isAvailable: boolean;
@@ -44,18 +38,18 @@ export declare class OrdersController {
                 printerGroup: string;
             };
         } & {
+            id: string;
             createdAt: Date;
             updatedAt: Date;
-            id: string;
             price: import("@prisma/client/runtime/library").Decimal;
             quantity: number;
             menuItemId: string;
             orderId: string;
         })[];
     } & {
+        id: string;
         createdAt: Date;
         updatedAt: Date;
-        id: string;
         status: string;
         orderNumber: string;
         paymentStatus: string;
@@ -67,9 +61,9 @@ export declare class OrdersController {
         note: string | null;
     })[]>;
     updateStatus(id: string, status: string): Promise<{
+        id: string;
         createdAt: Date;
         updatedAt: Date;
-        id: string;
         status: string;
         orderNumber: string;
         paymentStatus: string;
@@ -88,10 +82,10 @@ export declare class OrdersController {
         data: {
             orderItems: ({
                 menuItem: {
+                    id: string;
                     name: string;
                     createdAt: Date;
                     updatedAt: Date;
-                    id: string;
                     itemCode: string;
                     price: import("@prisma/client/runtime/library").Decimal;
                     isAvailable: boolean;
@@ -102,18 +96,18 @@ export declare class OrdersController {
                     printerGroup: string;
                 };
             } & {
+                id: string;
                 createdAt: Date;
                 updatedAt: Date;
-                id: string;
                 price: import("@prisma/client/runtime/library").Decimal;
                 quantity: number;
                 menuItemId: string;
                 orderId: string;
             })[];
         } & {
+            id: string;
             createdAt: Date;
             updatedAt: Date;
-            id: string;
             status: string;
             orderNumber: string;
             paymentStatus: string;
