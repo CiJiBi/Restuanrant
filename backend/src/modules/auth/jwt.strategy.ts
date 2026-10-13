@@ -4,7 +4,7 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 
 const jwtSecret = process.env.JWT_SECRET;
-if (!jwtSecret || jwtSecret.length < 32) {
+if (!jwtSecret || jwtSecret.length < 32 || jwtSecret.startsWith("REPLACE_")) {
   throw new Error("JWT_SECRET is required and must contain at least 32 characters. Configure it in the backend environment.");
 }
 
