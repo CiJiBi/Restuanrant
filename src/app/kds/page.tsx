@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 // Kết nối tới Backend (Cổng 4000)
-const socket: Socket = io("http://localhost:4000");
+const socket: Socket = io("http://localhost:4000", { autoConnect: false });
 
 interface OrderItem {
   id: string;
@@ -40,6 +40,8 @@ export default function KitchenDisplaySystem() {
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
+    socket.auth = { token: localStorage.getItem("cijibi_token") };
+    socket.connect();
     // Đồng hồ
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
 
@@ -65,6 +67,7 @@ export default function KitchenDisplaySystem() {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("receiveNewOrder");
+      socket.disconnect();
     };
   }, []);
   // Hàm chuyển đổi trạng thái món ăn khi đầu bếp bấm vào

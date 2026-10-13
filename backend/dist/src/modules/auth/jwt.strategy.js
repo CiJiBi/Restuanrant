@@ -14,23 +14,24 @@ const passport_jwt_1 = require("passport-jwt");
 const passport_1 = require("@nestjs/passport");
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret || jwtSecret.length < 32 || jwtSecret.startsWith("REPLACE_")) {
+    throw new Error("JWT_SECRET is required and must contain at least 32 characters. Configure it in the backend environment.");
+}
 let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
     constructor(prisma) {
-        super({
-            jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
-            ignoreExpiration: false,
-            secretOrKey: process.env.JWT_SECRET || "cijibi_super_secret_key_2026",
-        });
+        super({ jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(), ignoreExpiration: false, secretOrKey: jwtSecret });
         this.prisma = prisma;
     }
     async validate(payload) {
         const user = await this.prisma.user.findUnique({
             where: { id: payload.sub },
+            select: { id: true, email: true, role: true, isActive: true },
         });
-        if (!user) {
-            throw new common_1.UnauthorizedException("Token không hợp lệ hoặc tài khoản không tồn tại");
+        if (!user || !user.isActive) {
+            throw new common_1.UnauthorizedException("Token không hợp lệ hoặc tài khoản đã bị vô hiệu hóa");
         }
-        return { userId: payload.sub, email: payload.email, role: user.role };
+        return { userId: user.id, email: user.email, role: user.role };
     }
 };
 exports.JwtStrategy = JwtStrategy;

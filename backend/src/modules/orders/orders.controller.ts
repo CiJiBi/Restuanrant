@@ -1,31 +1,27 @@
-import {
-  Controller,
-  Get,
-  Patch,
-  Param,
-  Body,
-  UseGuards,
-  Post,
-} from "@nestjs/common";
+import { Body, Controller, Get, Patch, Param, Post, UseGuards } from "@nestjs/common";
 import { OrdersService } from "./orders.service";
-import { JwtAuthGuard } from "../../core/guards/jwt-auth.guard"; // (Nếu bạn chưa làm Guard này thì có thể tạm thời xóa dòng @UseGuards đi để test trước)
+import { JwtAuthGuard } from "../../core/guards/jwt-auth.guard";
+import { RolesGuard } from "../../core/guards/roles.guard";
+import { Roles } from "../../core/guards/roles.decorator";
 
-// @UseGuards(JwtAuthGuard) // Tạm thời comment lại dòng này nếu chưa cấu hình xong AuthGuard
 @Controller("orders")
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Get()
-  getAllOrders() {
-    return this.ordersService.getAllOrders();
-  }
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("ADMIN", "CASHIER", "CHEF", "WAITER")
+  getAllOrders() { return this.ordersService.getAllOrders(); }
 
   @Patch(":id/status")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("ADMIN", "CHEF", "WAITER", "CASHIER")
   updateStatus(@Param("id") id: string, @Body("status") status: string) {
     return this.ordersService.updateOrderStatus(id, status);
   }
+
   @Post()
-  createOrder(@Body() body: any) {
-    return this.ordersService.createOrder(body);
-  }
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles("ADMIN", "CASHIER", "WAITER")
+  createOrder(@Body() body: any) { return this.ordersService.createOrder(body); }
 }

@@ -1,83 +1,29 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Body,
-  Param,
-  UseGuards,
-} from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { MenuService } from "./menu.service";
 import { CreateMenuItemDto } from "./dto/create-menu-item.dto";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { RolesGuard } from "../../core/guards/roles.guard";
+import { Roles } from "../../core/guards/roles.decorator";
 
 @Controller("menu")
 export class MenuController {
   constructor(private readonly menuService: MenuService) {}
-
-  // ==============================================================
-  // NHÓM 1: QUẢN LÝ DANH MỤC (CATEGORIES)
-  // ==============================================================
-
-  // Lấy danh sách danh mục
-  @Get("categories")
-  async getAllCategories() {
-    return await this.menuService.getAllCategories();
-  }
-
-  // 👇 ĐÂY CHÍNH LÀ API CÒN THIẾU ĐỂ LƯU DANH MỤC (FIX LỖI 404)
+  @Get("categories") getAllCategories() { return this.menuService.getAllCategories(); }
   @Post("categories")
-  @UseGuards(JwtAuthGuard) // Bật bảo mật Token cho an toàn
-  async createCategory(@Body() body: { name: string }) {
-    return await this.menuService.createCategory(body.name);
-  }
-
-  // ==============================================================
-  // NHÓM 2: QUẢN LÝ MÓN ĂN (MENU ITEMS)
-  // ==============================================================
-
-  // Route lấy mã sản phẩm tự động tiếp theo (VD: SP03)
+  @UseGuards(JwtAuthGuard, RolesGuard) @Roles("ADMIN", "CHEF")
+  createCategory(@Body() body: { name: string }) { return this.menuService.createCategory(body.name); }
   @Get("next-code")
-  @UseGuards(JwtAuthGuard)
-  async getNextCode() {
-    return await this.menuService.getNextItemCode();
-  }
-
-  // Lấy danh sách tất cả món ăn (có kèm category)
-  @Get()
-  async findAll() {
-    return await this.menuService.getAllMenu();
-  }
-
-  // Thêm món ăn mới
+  @UseGuards(JwtAuthGuard, RolesGuard) @Roles("ADMIN", "CHEF")
+  getNextCode() { return this.menuService.getNextItemCode(); }
+  @Get() findAll() { return this.menuService.getAllMenu(); }
   @Post()
-  @UseGuards(JwtAuthGuard)
-  async create(@Body() createMenuItemDto: CreateMenuItemDto) {
-    return await this.menuService.createMenuItem(createMenuItemDto);
-  }
-
-  // ==============================================================
-  // NHÓM 3: CÁC ROUTE CÓ CHỨA PARAMETER (:id) - PHẢI ĐỂ CUỐI CÙNG
-  // ==============================================================
-
-  // Lấy chi tiết 1 món
-  @Get(":id")
-  async findOne(@Param("id") id: string) {
-    return await this.menuService.findOne(id);
-  }
-
-  // Cập nhật món ăn
+  @UseGuards(JwtAuthGuard, RolesGuard) @Roles("ADMIN", "CHEF")
+  create(@Body() dto: CreateMenuItemDto) { return this.menuService.createMenuItem(dto); }
+  @Get(":id") findOne(@Param("id") id: string) { return this.menuService.findOne(id); }
   @Patch(":id")
-  @UseGuards(JwtAuthGuard)
-  async update(@Param("id") id: string, @Body() body: any) {
-    return await this.menuService.updateMenuItem(id, body);
-  }
-
-  // Xóa món ăn
+  @UseGuards(JwtAuthGuard, RolesGuard) @Roles("ADMIN", "CHEF")
+  update(@Param("id") id: string, @Body() body: any) { return this.menuService.updateMenuItem(id, body); }
   @Delete(":id")
-  @UseGuards(JwtAuthGuard)
-  async delete(@Param("id") id: string) {
-    return await this.menuService.deleteMenuItem(id);
-  }
+  @UseGuards(JwtAuthGuard, RolesGuard) @Roles("ADMIN", "CHEF")
+  delete(@Param("id") id: string) { return this.menuService.deleteMenuItem(id); }
 }

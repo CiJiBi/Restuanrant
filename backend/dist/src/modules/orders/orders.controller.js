@@ -15,29 +15,32 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.OrdersController = void 0;
 const common_1 = require("@nestjs/common");
 const orders_service_1 = require("./orders.service");
+const jwt_auth_guard_1 = require("../../core/guards/jwt-auth.guard");
+const roles_guard_1 = require("../../core/guards/roles.guard");
+const roles_decorator_1 = require("../../core/guards/roles.decorator");
 let OrdersController = class OrdersController {
     constructor(ordersService) {
         this.ordersService = ordersService;
     }
-    getAllOrders() {
-        return this.ordersService.getAllOrders();
-    }
+    getAllOrders() { return this.ordersService.getAllOrders(); }
     updateStatus(id, status) {
         return this.ordersService.updateOrderStatus(id, status);
     }
-    createOrder(body) {
-        return this.ordersService.createOrder(body);
-    }
+    createOrder(body) { return this.ordersService.createOrder(body); }
 };
 exports.OrdersController = OrdersController;
 __decorate([
     (0, common_1.Get)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)("ADMIN", "CASHIER", "CHEF", "WAITER"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "getAllOrders", null);
 __decorate([
     (0, common_1.Patch)(":id/status"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)("ADMIN", "CHEF", "WAITER", "CASHIER"),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)("status")),
     __metadata("design:type", Function),
@@ -46,6 +49,8 @@ __decorate([
 ], OrdersController.prototype, "updateStatus", null);
 __decorate([
     (0, common_1.Post)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)("ADMIN", "CASHIER", "WAITER"),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

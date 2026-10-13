@@ -4,32 +4,32 @@ export declare class MenuController {
     private readonly menuService;
     constructor(menuService: MenuService);
     getAllCategories(): Promise<{
+        id: number;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: number;
     }[]>;
     createCategory(body: {
         name: string;
     }): Promise<{
+        id: number;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: number;
     }>;
     getNextCode(): Promise<string>;
     findAll(): Promise<({
         category: {
+            id: number;
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            id: number;
         };
     } & {
+        id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: string;
         itemCode: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;
@@ -39,11 +39,11 @@ export declare class MenuController {
         categoryId: number;
         printerGroup: string;
     })[]>;
-    create(createMenuItemDto: CreateMenuItemDto): Promise<{
+    create(dto: CreateMenuItemDto): Promise<{
+        id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: string;
         itemCode: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;
@@ -55,16 +55,16 @@ export declare class MenuController {
     }>;
     findOne(id: string): Promise<{
         category: {
+            id: number;
             name: string;
             createdAt: Date;
             updatedAt: Date;
-            id: number;
         };
     } & {
+        id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: string;
         itemCode: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;
@@ -75,10 +75,10 @@ export declare class MenuController {
         printerGroup: string;
     }>;
     update(id: string, body: any): Promise<{
+        id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        id: string;
         itemCode: string;
         price: import("@prisma/client/runtime/library").Decimal;
         isAvailable: boolean;

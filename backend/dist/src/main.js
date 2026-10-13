@@ -9,7 +9,7 @@ const http_exception_filter_1 = require("./core/filters/http-exception.filter");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.enableCors({
-        origin: "http://localhost:3000",
+        origin: (process.env.CORS_ORIGIN || "http://localhost:3000").split(",").map((value) => value.trim()),
         methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
         credentials: true,
     });

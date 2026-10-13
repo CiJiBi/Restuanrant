@@ -2,25 +2,20 @@ import { AuthService } from "./auth.service";
 export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
-    login(loginDto: any): Promise<{
+    login(loginDto: {
+        email: string;
+        password: string;
+    }): Promise<{
         success: boolean;
         message: string;
         data: {
             access_token: string;
             user: {
                 id: string;
-                name: any;
+                name: string;
                 email: string;
                 role: string;
             };
         };
-    }>;
-    registerAdmin(): Promise<{
-        message: string;
-        email: string;
-    }>;
-    setupAdmin(): Promise<{
-        message: string;
-        email: string;
     }>;
 }

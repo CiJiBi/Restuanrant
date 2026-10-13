@@ -17,94 +17,85 @@ const common_1 = require("@nestjs/common");
 const menu_service_1 = require("./menu.service");
 const create_menu_item_dto_1 = require("./dto/create-menu-item.dto");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
+const roles_guard_1 = require("../../core/guards/roles.guard");
+const roles_decorator_1 = require("../../core/guards/roles.decorator");
 let MenuController = class MenuController {
     constructor(menuService) {
         this.menuService = menuService;
     }
-    async getAllCategories() {
-        return await this.menuService.getAllCategories();
-    }
-    async createCategory(body) {
-        return await this.menuService.createCategory(body.name);
-    }
-    async getNextCode() {
-        return await this.menuService.getNextItemCode();
-    }
-    async findAll() {
-        return await this.menuService.getAllMenu();
-    }
-    async create(createMenuItemDto) {
-        return await this.menuService.createMenuItem(createMenuItemDto);
-    }
-    async findOne(id) {
-        return await this.menuService.findOne(id);
-    }
-    async update(id, body) {
-        return await this.menuService.updateMenuItem(id, body);
-    }
-    async delete(id) {
-        return await this.menuService.deleteMenuItem(id);
-    }
+    getAllCategories() { return this.menuService.getAllCategories(); }
+    createCategory(body) { return this.menuService.createCategory(body.name); }
+    getNextCode() { return this.menuService.getNextItemCode(); }
+    findAll() { return this.menuService.getAllMenu(); }
+    create(dto) { return this.menuService.createMenuItem(dto); }
+    findOne(id) { return this.menuService.findOne(id); }
+    update(id, body) { return this.menuService.updateMenuItem(id, body); }
+    delete(id) { return this.menuService.deleteMenuItem(id); }
 };
 exports.MenuController = MenuController;
 __decorate([
     (0, common_1.Get)("categories"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", void 0)
 ], MenuController.prototype, "getAllCategories", null);
 __decorate([
     (0, common_1.Post)("categories"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)("ADMIN", "CHEF"),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", void 0)
 ], MenuController.prototype, "createCategory", null);
 __decorate([
     (0, common_1.Get)("next-code"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)("ADMIN", "CHEF"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", void 0)
 ], MenuController.prototype, "getNextCode", null);
 __decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", void 0)
 ], MenuController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)("ADMIN", "CHEF"),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_menu_item_dto_1.CreateMenuItemDto]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", void 0)
 ], MenuController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(":id"),
     __param(0, (0, common_1.Param)("id")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", void 0)
 ], MenuController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Patch)(":id"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)("ADMIN", "CHEF"),
     __param(0, (0, common_1.Param)("id")),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", void 0)
 ], MenuController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(":id"),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)("ADMIN", "CHEF"),
     __param(0, (0, common_1.Param)("id")),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", void 0)
 ], MenuController.prototype, "delete", null);
 exports.MenuController = MenuController = __decorate([
     (0, common_1.Controller)("menu"),
